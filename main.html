@@ -1,604 +1,824 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Approval System - Demo</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Approval System - Integrated</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .debug-panel {
-            background: #f9f9f9;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-        }
-        
-        .debug-panel h3 {
-            margin-bottom: 15px;
-            color: #333;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .debug-item {
-            padding: 8px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 4px;
-            border-left: 3px solid #ccc;
-        }
-        
-        .debug-item.approved {
-            border-left-color: #4caf50;
-            background: #f1f8f4;
-        }
-        
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 6px;
-        }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #333;
-            margin-top: 5px;
-        }
-        
-        .media-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .media-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .media-card.approved {
-            border-color: #4caf50;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
-        }
-        
-        .media-preview {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: #f5f5f5;
-            display: block;
-        }
-        
-        .media-preview.video {
-            object-fit: contain;
-            background: #000;
-        }
-        
-        .media-info {
-            padding: 15px;
-        }
-        
-        .media-name {
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 5px;
-            word-break: break-word;
-            font-size: 14px;
-        }
-        
-        .media-id {
-            font-size: 11px;
-            color: #999;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 10px;
-        }
-        
-        .approval-section {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-top: 10px;
-            border-top: 1px solid #f0f0f0;
-        }
-        
-        .checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .checkbox-wrapper input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #4caf50;
-        }
-        
-        .checkbox-wrapper label {
-            cursor: pointer;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-badge.approved {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-badge.pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .button {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background 0.3s ease;
-        }
-        
-        .button:hover {
-            background: #45a049;
-        }
-        
-        .button.secondary {
-            background: #666;
-        }
-        
-        .button.secondary:hover {
-            background: #555;
-        }
-        
-        .button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .success-message {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            padding: 15px;
-            border-radius: 6px;
-            color: #155724;
-            margin-bottom: 20px;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .config-section {
+        background: #e3f2fd;
+        border: 2px solid #90caf9;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .config-section h3 {
+        margin-bottom: 10px;
+        color: #1976d2;
+      }
+
+      .config-section p {
+        color: #555;
+        line-height: 1.6;
+      }
+
+      .stats {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 6px;
+        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        margin-top: 5px;
+      }
+
+      .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .media-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      .media-card.approved {
+        border-color: #4caf50;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+      }
+
+      .media-card.denied {
+        border-color: #f44336;
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
+      }
+
+      .media-preview {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f5f5f5;
+        display: block;
+      }
+
+      .media-preview.video {
+        object-fit: contain;
+        background: #000;
+      }
+
+      .media-info {
+        padding: 15px;
+      }
+
+      .media-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 15px;
+        line-height: 1.4;
+      }
+
+      .media-description {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 10px;
+        line-height: 1.5;
+        max-height: 60px;
+        overflow: hidden;
+      }
+
+      .media-hashtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+
+      .hashtag {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .media-name {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 5px;
+        font-family: "Courier New", monospace;
+      }
+
+      .approval-section {
+        padding-top: 10px;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      .status-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .status-button {
+        flex: 1;
+        padding: 8px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .status-button:hover {
+        border-color: #bbb;
+      }
+
+      .status-button.active.approved {
+        background: #4caf50;
+        color: white;
+        border-color: #4caf50;
+      }
+
+      .status-button.active.pending {
+        background: #ff9800;
+        color: white;
+        border-color: #ff9800;
+      }
+
+      .status-button.active.denied {
+        background: #f44336;
+        color: white;
+        border-color: #f44336;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: background 0.3s ease;
+      }
+
+      .button:hover {
+        background: #45a049;
+      }
+
+      .button.secondary {
+        background: #666;
+      }
+
+      .button.secondary:hover {
+        background: #555;
+      }
+
+      .button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .message {
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .message.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+
+      .message.error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+
+      .message.info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .debug-panel {
+        background: #f9f9f9;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .debug-panel h3 {
+        margin-bottom: 15px;
+        color: #333;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Media Approval System - Demo Mode</h1>
-        <p style="color: #666; margin-bottom: 20px;">Testing with placeholder media - checkboxes update the approval state in real-time</p>
-        
-        <div id="message"></div>
-        
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Total Media</span>
-                <span class="stat-value" id="totalCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Approved</span>
-                <span class="stat-value" id="approvedCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Pending</span>
-                <span class="stat-value" id="pendingCount">0</span>
-            </div>
+      <h1>Media Approval System</h1>
+      <p style="color: #666; margin-bottom: 20px">
+        Videos from Cloudflare, metadata from Airtable
+      </p>
+
+      <div class="config-section">
+        <h3>📡 Data Sources</h3>
+        <p><strong>Videos:</strong> Loaded from Cloudflare R2 Storage</p>
+        <p>
+          <strong>Metadata:</strong> Synced with Airtable (Title, Description,
+          Hashtags, Status)
+        </p>
+      </div>
+
+      <div id="message"></div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Media</span>
+          <span class="stat-value" id="totalCount">0</span>
         </div>
-        
-        <div class="debug-panel">
-            <h3>🐛 Debug Panel - Current Approval State</h3>
-            <div id="debugOutput"></div>
+        <div class="stat-item">
+          <span class="stat-label">Approved</span>
+          <span class="stat-value" id="approvedCount">0</span>
         </div>
-        
-        <div id="mediaGrid" class="media-grid"></div>
-        
-        <div class="action-buttons">
-            <button id="saveButton" class="button">Save Approvals (Console Log)</button>
-            <button id="clearButton" class="button secondary">Clear All Approvals</button>
-            <button id="approveAllButton" class="button secondary">Approve All</button>
+        <div class="stat-item">
+          <span class="stat-label">Pending</span>
+          <span class="stat-value" id="pendingCount">0</span>
         </div>
+        <div class="stat-item">
+          <span class="stat-label">Denied</span>
+          <span class="stat-value" id="deniedCount">0</span>
+        </div>
+      </div>
+
+      <div id="mediaGrid" class="media-grid">
+        <div class="loading">Loading media...</div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="syncButton" class="button">
+          Sync All Changes to Airtable
+        </button>
+        <button id="approveAllButton" class="button secondary">
+          Approve All
+        </button>
+        <button id="clearButton" class="button secondary">
+          Reset All to Pending
+        </button>
+      </div>
+
+      <div class="debug-panel">
+        <h3>🐛 Debug Console</h3>
+        <div id="debugOutput" style="color: #666">Ready to load data...</div>
+      </div>
     </div>
 
     <script>
-(function() {
-    'use strict';
-    
-    // Configuration
-    const CLOUDFLARE_CONFIG = {
-        workerUrl: 'https://get-media-in-folder.tyler-chasse.workers.dev',
-        folderPath: 'oct-2025/1/'
-    };
+      // CONFIGURATION
+      const CLOUDFLARE_CONFIG = {
+        workerUrl: "https://get-media-in-folder.tyler-chasse.workers.dev",
+        folderPath: "oct-2025/1/",
+      };
 
-    let mediaFiles = [];
-    let approvals = {};
+      const AIRTABLE_CONFIG = {
+        token: "YOUR_AIRTABLE_API_KEY_HERE",
+        baseId: "YOUR_AIRTABLE_BASE_ID_HERE",
+        tableName: "Content Post Data",
+      };
 
-    // Load media files dynamically from Cloudflare
-    async function loadMediaFromCloudflare() {
-        const loadingDiv = document.getElementById('loading');
-        if (loadingDiv) loadingDiv.style.display = 'block';
-        
+      // STATE
+      let cloudflareFiles = []; // Raw video files from Cloudflare
+      let airtableData = {}; // Metadata from Airtable, keyed by video_id
+      let mediaFiles = []; // Combined data
+      let approvalStates = {}; // Status for each video
+
+      // INITIALIZE
+      function init() {
+        console.log("🚀 Initializing Media Approval System");
+        console.log("📡 Cloudflare Worker:", CLOUDFLARE_CONFIG.workerUrl);
+        console.log("📊 Airtable Base:", AIRTABLE_CONFIG.baseId);
+
+        // Load data from both sources
+        loadAllData();
+
+        // Setup button listeners
+        document
+          .getElementById("syncButton")
+          .addEventListener("click", syncToAirtable);
+        document
+          .getElementById("clearButton")
+          .addEventListener("click", resetAllToPending);
+        document
+          .getElementById("approveAllButton")
+          .addEventListener("click", approveAllMedia);
+      }
+
+      // LOAD DATA FROM BOTH SOURCES
+      async function loadAllData() {
         try {
-            console.log('📡 Fetching media from:', `${CLOUDFLARE_CONFIG.workerUrl}/list?prefix=${CLOUDFLARE_CONFIG.folderPath}`);
-            
-            const response = await fetch(
-                `${CLOUDFLARE_CONFIG.workerUrl}/list?prefix=${CLOUDFLARE_CONFIG.folderPath}`
-            );
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            mediaFiles = data.files || [];
-            
-            console.log('✅ Successfully loaded media files:', mediaFiles);
-            console.log('📊 Total files:', data.count);
-            
-            if (loadingDiv) loadingDiv.style.display = 'none';
-            
-            if (mediaFiles.length === 0) {
-                showError(`No files found in folder: ${CLOUDFLARE_CONFIG.folderPath}`);
-                return;
-            }
-            
-            renderMediaGrid();
-          
-          	// Inside loadMediaFromCloudflare(), after renderMediaGrid()
-console.log('🔍 DEBUG: First 3 file objects:', mediaFiles.slice(0, 3));
-console.log('🔍 DEBUG: First file URL:', mediaFiles[0]?.url);
+          showMessage("Loading data...", "info");
+          logDebug("Starting data load from Cloudflare and Airtable");
 
-// Try loading first image directly
-if (mediaFiles[0]) {
-    const testImg = new Image();
-    testImg.onload = () => console.log('✅ First image loaded successfully');
-    testImg.onerror = (e) => console.error('❌ First image failed to load:', e);
-    testImg.src = mediaFiles[0].url;
-}
-          
-            updateStats();
-            updateDebugPanel();
-            
-            // Show action buttons
-            const saveButton = document.getElementById('saveButton');
-            if (saveButton) saveButton.style.display = 'block';
-            
+          // Load in parallel
+          const [cfResult, atResult] = await Promise.allSettled([
+            loadFromCloudflare(),
+            loadFromAirtable(),
+          ]);
+
+          if (cfResult.status === "rejected") {
+            throw new Error(`Cloudflare: ${cfResult.reason}`);
+          }
+          if (atResult.status === "rejected") {
+            throw new Error(`Airtable: ${atResult.reason}`);
+          }
+
+          // Merge the data
+          mergeData();
+
+          renderMediaGrid();
+          updateStats();
+
+          showMessage(
+            `✓ Loaded ${mediaFiles.length} videos successfully!`,
+            "success"
+          );
+          logDebug(`Data merge complete: ${mediaFiles.length} videos ready`);
         } catch (error) {
-            console.error('❌ Error loading media:', error);
-            if (loadingDiv) loadingDiv.style.display = 'none';
-            showError('Failed to load media: ' + error.message);
+          console.error("❌ Error loading data:", error);
+          showMessage(`Error: ${error.message}`, "error");
+          logDebug(`Load error: ${error.message}`);
         }
-    }
+      }
 
-    // Render media grid
-    function renderMediaGrid() {
-        const grid = document.getElementById('mediaGrid');
-        if (!grid) return;
-        
-        grid.innerHTML = '';
+      // LOAD FROM CLOUDFLARE
+      async function loadFromCloudflare() {
+        logDebug("Loading videos from Cloudflare...");
 
-        mediaFiles.forEach(file => {
-            const card = createMediaCard(file);
-            grid.appendChild(card);
+        const url = `${CLOUDFLARE_CONFIG.workerUrl}/list?prefix=${CLOUDFLARE_CONFIG.folderPath}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`Cloudflare HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        cloudflareFiles = data.files || [];
+        logDebug(`Loaded ${cloudflareFiles.length} files from Cloudflare`);
+        console.log("📦 Cloudflare files:", cloudflareFiles);
+
+        return cloudflareFiles;
+      }
+
+      // LOAD FROM AIRTABLE
+      async function loadFromAirtable() {
+        logDebug("Loading metadata from Airtable...");
+
+        const url = `https://api.airtable.com/v0/${
+          AIRTABLE_CONFIG.baseId
+        }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+          },
         });
-    }
 
-    // Create individual media card
-    function createMediaCard(file) {
-        const card = document.createElement('div');
-        card.className = 'media-card';
+        if (!response.ok) {
+          throw new Error(`Airtable HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Convert to lookup object keyed by video_id
+        airtableData = {};
+        data.records.forEach((record) => {
+          const fields = record.fields;
+          const videoId = fields.video_id;
+
+          if (videoId) {
+            airtableData[videoId] = {
+              recordId: record.id,
+              title: fields.video_title || "",
+              description:
+                fields.description?.value || fields.description || "",
+              hashtags:
+                fields.relevant_hashtags?.value ||
+                fields.relevant_hashtags ||
+                "",
+              status: fields.status || "Pending",
+            };
+          }
+        });
+
+        logDebug(
+          `Loaded ${Object.keys(airtableData).length} records from Airtable`
+        );
+        console.log("📊 Airtable data:", airtableData);
+
+        return airtableData;
+      }
+
+      // MERGE CLOUDFLARE + AIRTABLE DATA
+      function mergeData() {
+        logDebug("Merging Cloudflare and Airtable data...");
+
+        mediaFiles = cloudflareFiles.map((file) => {
+          // Use file.id or file.name as the lookup key
+          const lookupKey = file.id || file.name;
+          const metadata = airtableData[lookupKey] || {};
+
+          // Determine content type
+          const isVideo =
+            file.contentType?.startsWith("video/") ||
+            file.url?.includes(".mp4") ||
+            file.name?.endsWith(".mp4");
+
+          const merged = {
+            // From Cloudflare
+            id: file.id,
+            name: file.name,
+            url: file.url,
+            size: file.size,
+            uploaded: file.uploaded,
+            contentType: file.contentType,
+            type: isVideo ? "video" : "image",
+
+            // From Airtable
+            airtableRecordId: metadata.recordId || null,
+            title: metadata.title || file.name,
+            description: metadata.description || "",
+            hashtags: metadata.hashtags || "",
+            status: metadata.status || "Pending",
+          };
+
+          // Initialize approval state
+          approvalStates[file.id] = {
+            status: (metadata.status || "Pending").toLowerCase(),
+            airtableRecordId: metadata.recordId,
+          };
+
+          return merged;
+        });
+
+        logDebug(`Merged ${mediaFiles.length} files with metadata`);
+        console.log("🎬 Merged media files:", mediaFiles);
+      }
+
+      // RENDER MEDIA GRID
+      function renderMediaGrid() {
+        const grid = document.getElementById("mediaGrid");
+
+        if (mediaFiles.length === 0) {
+          grid.innerHTML = '<div class="loading">No media found</div>';
+          return;
+        }
+
+        grid.innerHTML = "";
+
+        mediaFiles.forEach((file) => {
+          const card = createMediaCard(file);
+          grid.appendChild(card);
+        });
+      }
+
+      // CREATE MEDIA CARD
+      function createMediaCard(file) {
+        const card = document.createElement("div");
+        card.className = "media-card";
         card.id = `card-${file.id}`;
-        card.dataset.fileId = file.id;
-        
-        if (approvals[file.id]) {
-            card.classList.add('approved');
+
+        const status = approvalStates[file.id]?.status || "pending";
+        if (status === "approved") {
+          card.classList.add("approved");
+        } else if (status === "denied") {
+          card.classList.add("denied");
         }
 
-        const isVideo = file.type === 'video' || file.contentType?.startsWith('video/');
-        const isImage = file.type === 'image' || file.contentType?.startsWith('image/');
-
-        let mediaHTML = '';
-        if (isImage) {
-            mediaHTML = `<img src="${file.url}" class="media-preview" alt="${file.name}" loading="lazy">`;
-        } else if (isVideo) {
-            mediaHTML = `<video src="${file.url}" class="media-preview video" controls></video>`;
+        // Media preview
+        let mediaHTML = "";
+        if (file.type === "video") {
+          mediaHTML = `<video src="${file.url}" class="media-preview video" controls></video>`;
+        } else if (file.type === "image") {
+          mediaHTML = `<img src="${file.url}" class="media-preview" alt="${file.title}" loading="lazy">`;
         } else {
-            mediaHTML = `<div class="media-preview" style="display:flex;align-items:center;justify-content:center;color:#999;">
-                <span>📄 ${file.name?.split('.').pop()?.toUpperCase() || 'File'}</span>
-            </div>`;
+          mediaHTML = `<div class="media-preview" style="display:flex;align-items:center;justify-content:center;color:#999;">
+                    <span>📄 File</span>
+                </div>`;
         }
 
-        const isApproved = approvals[file.id] === true;
+        // Parse hashtags
+        const hashtags = file.hashtags
+          ? file.hashtags
+              .split(/[,\s]+/)
+              .filter((h) => h)
+              .map((tag) => {
+                const cleanTag = tag.startsWith("#") ? tag : `#${tag}`;
+                return `<span class="hashtag">${cleanTag}</span>`;
+              })
+              .join("")
+          : "";
 
         card.innerHTML = `
-            ${mediaHTML}
-            <div class="media-info">
-                <div class="media-name">${file.name}</div>
-                <div class="media-id">ID: ${file.id}</div>
-                <div class="approval-section">
-                    <div class="checkbox-wrapper">
-                        <input 
-                            type="checkbox" 
-                            id="approve-${file.id}"
-                            data-file-id="${file.id}"
-                            ${isApproved ? 'checked' : ''}
-                        >
-                        <label for="approve-${file.id}">Approved</label>
+                ${mediaHTML}
+                <div class="media-info">
+                    ${
+                      file.title
+                        ? `<div class="media-title">${file.title}</div>`
+                        : ""
+                    }
+                    ${
+                      file.description
+                        ? `<div class="media-description">${file.description}</div>`
+                        : ""
+                    }
+                    ${
+                      hashtags
+                        ? `<div class="media-hashtags">${hashtags}</div>`
+                        : ""
+                    }
+                    <div class="media-name">${file.name}</div>
+                    <div class="approval-section">
+                        <div class="status-selector">
+                            <button class="status-button ${
+                              status === "approved" ? "active approved" : ""
+                            }" 
+                                    onclick="setStatus('${
+                                      file.id
+                                    }', 'approved')">
+                                ✓ Approve
+                            </button>
+                            <button class="status-button ${
+                              status === "pending" ? "active pending" : ""
+                            }" 
+                                    onclick="setStatus('${
+                                      file.id
+                                    }', 'pending')">
+                                ○ Pending
+                            </button>
+                            <button class="status-button ${
+                              status === "denied" ? "active denied" : ""
+                            }" 
+                                    onclick="setStatus('${file.id}', 'denied')">
+                                ✕ Deny
+                            </button>
+                        </div>
                     </div>
-                    <span class="status-badge ${isApproved ? 'approved' : 'pending'}">
-                        ${isApproved ? '✓ Approved' : 'Pending'}
-                    </span>
-                </div>
-            </div>
-        `;
-
-        // Add event listener directly to the checkbox (NO inline handlers)
-        const checkbox = card.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener('change', function(e) {
-            toggleApproval(file.id, e.target.checked);
-        });
-
-        return card;
-    }
-
-    // Toggle approval status
-    function toggleApproval(fileId, isApproved) {
-        console.log(`📝 Toggling approval for ${fileId}:`, isApproved);
-        
-        if (isApproved) {
-            approvals[fileId] = true;
-        } else {
-            delete approvals[fileId];
-        }
-        
-        updateCardStyle(fileId, isApproved);
-        updateStats();
-        updateDebugPanel();
-        
-        console.log('📊 Current approvals state:', approvals);
-    }
-
-    // Update card styling
-    function updateCardStyle(fileId, isApproved) {
-        const card = document.getElementById(`card-${fileId}`);
-        if (!card) return;
-        
-        const statusBadge = card.querySelector('.status-badge');
-        
-        if (isApproved) {
-            card.classList.add('approved');
-            statusBadge.classList.remove('pending');
-            statusBadge.classList.add('approved');
-            statusBadge.textContent = '✓ Approved';
-        } else {
-            card.classList.remove('approved');
-            statusBadge.classList.remove('approved');
-            statusBadge.classList.add('pending');
-            statusBadge.textContent = 'Pending';
-        }
-    }
-
-    // Update statistics
-    function updateStats() {
-        const totalCount = mediaFiles.length;
-        const approvedCount = Object.keys(approvals).length;
-        const pendingCount = totalCount - approvedCount;
-        
-        const totalEl = document.getElementById('totalCount');
-        const approvedEl = document.getElementById('approvedCount');
-        const pendingEl = document.getElementById('pendingCount');
-        
-        if (totalEl) totalEl.textContent = totalCount;
-        if (approvedEl) approvedEl.textContent = approvedCount;
-        if (pendingEl) pendingEl.textContent = pendingCount;
-    }
-
-    // Update debug panel
-    function updateDebugPanel() {
-        const debugOutput = document.getElementById('debugOutput');
-        if (!debugOutput) return;
-        
-        if (Object.keys(approvals).length === 0) {
-            debugOutput.innerHTML = '<div style="color: #999; padding: 10px;">No approvals yet...</div>';
-            return;
-        }
-        
-        let html = '';
-        mediaFiles.forEach(file => {
-            const isApproved = approvals[file.id] === true;
-            const className = isApproved ? 'approved' : '';
-            const status = isApproved ? '✓ APPROVED' : '○ PENDING';
-            
-            html += `
-                <div class="debug-item ${className}">
-                    <strong>${file.name}</strong><br>
-                    ID: ${file.id}<br>
-                    Status: ${status}<br>
-                    Value: approvals['${file.id}'] = ${approvals[file.id] || 'undefined'}
                 </div>
             `;
-        });
-        
-        debugOutput.innerHTML = html;
-    }
 
-    // Save approvals
-    function saveApprovals() {
-        console.log('💾 SAVE CLICKED - Current approval data:');
-        console.log(JSON.stringify(approvals, null, 2));
-        
-        const dataToSave = {
-            contactId: 'CONTACT_ID_HERE',
-            customFieldKey: 'approved_media',
-            customFieldValue: JSON.stringify(approvals),
-            timestamp: new Date().toISOString(),
-            approvedCount: Object.keys(approvals).length,
-            approvedMediaIds: Object.keys(approvals)
-        };
-        
-        console.log('📤 Data that would be sent to API:');
-        console.log(JSON.stringify(dataToSave, null, 2));
-        
-        showSuccess(`✓ Approvals logged to console! ${Object.keys(approvals).length} items approved.`);
-    }
+        return card;
+      }
 
-    // Clear all approvals
-    function clearAllApprovals() {
-        console.log('🧹 Clearing all approvals');
-        approvals = {};
-        
-        mediaFiles.forEach(file => {
-            const checkbox = document.getElementById(`approve-${file.id}`);
-            if (checkbox) {
-                checkbox.checked = false;
-                updateCardStyle(file.id, false);
-            }
+      // SET STATUS
+      window.setStatus = function (fileId, status) {
+        console.log(`📝 Setting status for ${fileId}:`, status);
+
+        if (!approvalStates[fileId]) {
+          approvalStates[fileId] = {};
+        }
+
+        approvalStates[fileId].status = status;
+
+        // Update UI
+        const card = document.getElementById(`card-${fileId}`);
+        card.classList.remove("approved", "denied");
+        if (status === "approved") {
+          card.classList.add("approved");
+        } else if (status === "denied") {
+          card.classList.add("denied");
+        }
+
+        // Update buttons
+        const buttons = card.querySelectorAll(".status-button");
+        buttons.forEach((btn) => {
+          btn.classList.remove("active", "approved", "pending", "denied");
+          if (btn.textContent.includes("Approve") && status === "approved") {
+            btn.classList.add("active", "approved");
+          } else if (
+            btn.textContent.includes("Pending") &&
+            status === "pending"
+          ) {
+            btn.classList.add("active", "pending");
+          } else if (btn.textContent.includes("Deny") && status === "denied") {
+            btn.classList.add("active", "denied");
+          }
         });
-        
+
         updateStats();
-        updateDebugPanel();
-        
-        showSuccess('All approvals cleared!');
-    }
+        logDebug(`Status changed: ${fileId} → ${status}`);
+      };
 
-    // Approve all media
-    function approveAllMedia() {
-        console.log('✅ Approving all media');
-        
-        mediaFiles.forEach(file => {
-            approvals[file.id] = true;
-            const checkbox = document.getElementById(`approve-${file.id}`);
-            if (checkbox) {
-                checkbox.checked = true;
-                updateCardStyle(file.id, true);
+      // SYNC TO AIRTABLE
+      async function syncToAirtable() {
+        showMessage("Syncing to Airtable...", "info");
+        logDebug("Starting sync to Airtable...");
+
+        try {
+          const updates = [];
+
+          // Only update records that have an Airtable record ID
+          for (const [fileId, state] of Object.entries(approvalStates)) {
+            if (state.airtableRecordId) {
+              updates.push({
+                id: state.airtableRecordId,
+                fields: {
+                  status:
+                    state.status.charAt(0).toUpperCase() +
+                    state.status.slice(1),
+                },
+              });
             }
+          }
+
+          if (updates.length === 0) {
+            showMessage("No Airtable records to update", "info");
+            return;
+          }
+
+          // Batch updates (max 10 per request)
+          const batchSize = 10;
+          for (let i = 0; i < updates.length; i += batchSize) {
+            const batch = updates.slice(i, i + batchSize);
+
+            const url = `https://api.airtable.com/v0/${
+              AIRTABLE_CONFIG.baseId
+            }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}`;
+            const response = await fetch(url, {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ records: batch }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Airtable API error: ${response.status}`);
+            }
+
+            logDebug(
+              `Synced batch ${Math.floor(i / batchSize) + 1} (${
+                batch.length
+              } records)`
+            );
+          }
+
+          showMessage(
+            `✓ Successfully synced ${updates.length} records to Airtable!`,
+            "success"
+          );
+          logDebug(`Sync complete: ${updates.length} records updated`);
+        } catch (error) {
+          console.error("Error syncing to Airtable:", error);
+          showMessage(`Error: ${error.message}`, "error");
+          logDebug(`Sync error: ${error.message}`);
+        }
+      }
+
+      // RESET ALL TO PENDING
+      function resetAllToPending() {
+        mediaFiles.forEach((file) => {
+          setStatus(file.id, "pending");
         });
-        
-        updateStats();
-        updateDebugPanel();
-        
-        showSuccess('All media approved!');
-    }
+        showMessage("All media reset to pending", "info");
+      }
 
-    // Show error message
-    function showError(message) {
-        const messageDiv = document.getElementById('message');
-        if (!messageDiv) return;
-        messageDiv.innerHTML = `<div class="error">${message}</div>`;
-    }
+      // APPROVE ALL
+      function approveAllMedia() {
+        mediaFiles.forEach((file) => {
+          setStatus(file.id, "approved");
+        });
+        showMessage("All media approved!", "success");
+      }
 
-    // Show success message
-    function showSuccess(message) {
-        const messageDiv = document.getElementById('message');
-        if (!messageDiv) return;
-        messageDiv.innerHTML = `<div class="success-message">${message}</div>`;
+      // UPDATE STATS
+      function updateStats() {
+        const totalCount = mediaFiles.length;
+        let approvedCount = 0;
+        let pendingCount = 0;
+        let deniedCount = 0;
+
+        Object.values(approvalStates).forEach((state) => {
+          if (state.status === "approved") approvedCount++;
+          else if (state.status === "denied") deniedCount++;
+          else pendingCount++;
+        });
+
+        document.getElementById("totalCount").textContent = totalCount;
+        document.getElementById("approvedCount").textContent = approvedCount;
+        document.getElementById("pendingCount").textContent = pendingCount;
+        document.getElementById("deniedCount").textContent = deniedCount;
+      }
+
+      // SHOW MESSAGE
+      function showMessage(text, type = "info") {
+        const messageDiv = document.getElementById("message");
+        messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
         setTimeout(() => {
-            messageDiv.innerHTML = '';
-        }, 3000);
-    }
+          messageDiv.innerHTML = "";
+        }, 5000);
+      }
 
-    // Initialize when DOM is ready
-    function init() {
-        console.log('🚀 Initializing Media Approval System');
-        
-        loadMediaFromCloudflare();
-        
-        // Setup button event listeners
-        const saveButton = document.getElementById('saveButton');
-        const clearButton = document.getElementById('clearButton');
-        const approveAllButton = document.getElementById('approveAllButton');
-        
-        if (saveButton) {
-            saveButton.addEventListener('click', saveApprovals);
-        }
-        if (clearButton) {
-            clearButton.addEventListener('click', clearAllApprovals);
-        }
-        if (approveAllButton) {
-            approveAllButton.addEventListener('click', approveAllMedia);
-        }
-    }
+      // LOG DEBUG
+      function logDebug(message) {
+        const debugOutput = document.getElementById("debugOutput");
+        const timestamp = new Date().toLocaleTimeString();
+        debugOutput.innerHTML =
+          `[${timestamp}] ${message}<br>` + debugOutput.innerHTML;
 
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
+        // Keep only last 20 messages
+        const lines = debugOutput.innerHTML.split("<br>");
+        if (lines.length > 20) {
+          debugOutput.innerHTML = lines.slice(0, 20).join("<br>");
+        }
+      }
+
+      // START
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
         init();
-    }
-})();
-</script>
-</body>
+      }
+    </script>
+  </body>
 </html>
