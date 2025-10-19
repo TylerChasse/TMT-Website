@@ -293,18 +293,6 @@
   <body>
     <div class="container">
       <h1>Media Approval System</h1>
-      <p style="color: #666; margin-bottom: 20px">
-        Videos from Cloudflare, metadata from Airtable
-      </p>
-
-      <div class="config-section">
-        <h3>📡 Data Sources</h3>
-        <p><strong>Videos:</strong> Loaded from Cloudflare R2 Storage</p>
-        <p>
-          <strong>Metadata:</strong> Synced with Airtable (Title, Description,
-          Hashtags, Status)
-        </p>
-      </div>
 
       <div id="message"></div>
 
@@ -477,6 +465,7 @@
           
           if (videoId != null) {
             airtableData[videoId] = {
+              id: videoId,
               recordId: record.id,
               title: fields.title || "",
               description:
@@ -515,7 +504,6 @@
 
           const merged = {
             // From Cloudflare
-            id: file.id,
             name: file.name,
             url: file.url,
             size: file.size,
@@ -524,6 +512,7 @@
             type: isVideo ? "video" : "image",
 
             // From Airtable
+            id: metadata.id,
             airtableRecordId: metadata.recordId || null,
             title: metadata.title || file.name,
             description: metadata.description || "",
