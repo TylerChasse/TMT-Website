@@ -353,13 +353,13 @@
       // CONFIGURATION
       const CLOUDFLARE_CONFIG = {
         workerUrl: "https://get-media-in-folder.tyler-chasse.workers.dev",
-        folderPath: "oct-2025/1/",
+        folderPath: "October_2025/Work_Order_10_19_2025_16:59:35/",
       };
 
       const AIRTABLE_CONFIG = {
-        token: "YOUR_AIRTABLE_API_KEY_HERE",
-        baseId: "YOUR_AIRTABLE_BASE_ID_HERE",
-        tableName: "Content Post Data",
+        token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3",
+        baseId: "appXteAFbB6ZwFuow",
+        tableName: "Work Order 10/19/2025 16:59:35",
       };
 
       // STATE
@@ -473,12 +473,12 @@
         airtableData = {};
         data.records.forEach((record) => {
           const fields = record.fields;
-          const videoId = fields.video_id;
-
-          if (videoId) {
+          const videoId = fields.id;
+          
+          if (videoId != null) {
             airtableData[videoId] = {
               recordId: record.id,
-              title: fields.video_title || "",
+              title: fields.title || "",
               description:
                 fields.description?.value || fields.description || "",
               hashtags:
@@ -504,9 +504,9 @@
 
         mediaFiles = cloudflareFiles.map((file) => {
           // Use file.id or file.name as the lookup key
-          const lookupKey = file.id || file.name;
+          const lookupKey = file.name.substring(0, file.name.lastIndexOf("."));
           const metadata = airtableData[lookupKey] || {};
-
+          console.log("Lookup Key:", lookupKey, "Metadata:", metadata);
           // Determine content type
           const isVideo =
             file.contentType?.startsWith("video/") ||
@@ -616,7 +616,6 @@
                         ? `<div class="media-hashtags">${hashtags}</div>`
                         : ""
                     }
-                    <div class="media-name">${file.name}</div>
                     <div class="approval-section">
                         <div class="status-selector">
                             <button class="status-button ${
