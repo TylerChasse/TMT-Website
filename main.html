@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Approval System - Airtable</title>
     <style>
       * {
         margin: 0;
@@ -128,12 +129,79 @@
         padding: 15px;
       }
 
+      .media-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
       .media-title {
         font-weight: 600;
         color: #333;
-        margin-bottom: 8px;
         font-size: 15px;
         line-height: 1.4;
+        flex: 1;
+      }
+
+      .viral-score-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: help;
+        position: relative;
+        flex-shrink: 0;
+        margin-left: 8px;
+      }
+
+      .viral-score-badge.high {
+        background: #4caf50;
+        color: white;
+      }
+
+      .viral-score-badge.medium {
+        background: #ff9800;
+        color: white;
+      }
+
+      .viral-score-badge.low {
+        background: #9e9e9e;
+        color: white;
+      }
+
+      .viral-score-badge:hover::after {
+        content: attr(data-reason);
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        margin-bottom: 8px;
+        padding: 10px;
+        background: #333;
+        color: white;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 400;
+        white-space: normal;
+        width: 250px;
+        text-align: left;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        line-height: 1.4;
+      }
+
+      .viral-score-badge:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        right: 20px;
+        margin-bottom: 2px;
+        border: 6px solid transparent;
+        border-top-color: #333;
+        z-index: 1001;
       }
 
       .media-description {
@@ -296,6 +364,33 @@
           sans-serif;
         margin-bottom: 10px;
       }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
+        .media-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .media-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .viral-score-badge {
+          margin-left: 0;
+          margin-top: 8px;
+        }
+
+        .viral-score-badge:hover::after {
+          right: auto;
+          left: 0;
+        }
+
+        .viral-score-badge:hover::before {
+          right: auto;
+          left: 20px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -304,8 +399,6 @@
       <p style="color: #666; margin-bottom: 20px">
         Review and approve media from Airtable
       </p>
-
-      <div id="message"></div>
 
       <div class="stats">
         <div class="stat-item">
@@ -327,7 +420,7 @@
       </div>
 
       <div class="debug-panel">
-        <h3>🐛 Debug Log</h3>
+        <h3>Debug Log</h3>
         <div id="debugOutput"></div>
       </div>
 
@@ -352,17 +445,19 @@
       // CONFIGURATION - UPDATE THESE VALUES
       // ============================================
       const AIRTABLE_CONFIG = {
-        token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3",
-        baseId: "appXteAFbB6ZwFuow",
+        token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", 
+        baseId: "appXteAFbB6ZwFuow", 
         tableName: "Work Order 10/24/2025 16:18:41",
         
         // Field names in your Airtable (adjust if different)
         fields: {
-          contentUrl: "content_url", 
-          title: "title",
-          description: "description",
-          hashtags: "hashtags",
-          viralScore: "viral_score",
+          contentUrl: "content_url", // Required: URL to media file
+          status: "status", // Required: approval status
+          title: "title", // Optional
+          description: "description", // Optional
+          hashtags: "hashtags", // Optional
+          viralScore: "viral_score", // Optional
+          viralReason: "viral_reason", // Optional
         },
 
         // Optional: Filter records (leave empty to get all)
@@ -497,6 +592,8 @@
                 title: fields[AIRTABLE_CONFIG.fields.title] || fileName,
                 description: fields[AIRTABLE_CONFIG.fields.description] || "",
                 hashtags: fields[AIRTABLE_CONFIG.fields.hashtags] || "",
+                viralScore: fields[AIRTABLE_CONFIG.fields.viralScore] || null,
+                viralReason: fields[AIRTABLE_CONFIG.fields.viralReason] || "",
               };
             })
             .filter((file) => file !== null);
@@ -530,6 +627,19 @@
       }
 
       // ============================================
+      // GET VIRAL SCORE LEVEL
+      // ============================================
+      function getViralScoreLevel(score) {
+        if (score === null || score === undefined) return null;
+        const numScore = parseFloat(score);
+        if (isNaN(numScore)) return null;
+        
+        if (numScore >= 7) return "high";
+        if (numScore >= 4) return "medium";
+        return "low";
+      }
+
+      // ============================================
       // CREATE MEDIA CARD
       // ============================================
       function createMediaCard(file) {
@@ -556,6 +666,19 @@
                 </div>`;
         }
 
+        // Viral score badge
+        let viralScoreBadge = "";
+        if (file.viralScore !== null && file.viralScore !== undefined) {
+          const scoreLevel = getViralScoreLevel(file.viralScore);
+          const reason = file.viralReason || "No reason provided";
+          
+          viralScoreBadge = `
+            <div class="viral-score-badge ${scoreLevel}" data-reason="${reason.replace(/"/g, '&quot;')}" title="Hover for details">
+              Virality Score: ${file.viralScore}
+            </div>
+          `;
+        }
+
         // Parse hashtags
         const hashtags = file.hashtags
           ? file.hashtags
@@ -571,11 +694,14 @@
         card.innerHTML = `
                 ${mediaHTML}
                 <div class="media-info">
-                    ${
-                      file.title
-                        ? `<div class="media-title">${file.title}</div>`
-                        : ""
-                    }
+                    <div class="media-header">
+                        ${
+                          file.title
+                            ? `<div class="media-title">${file.title}</div>`
+                            : ""
+                        }
+                        ${viralScoreBadge}
+                    </div>
                     ${
                       file.description
                         ? `<div class="media-description">${file.description}</div>`
