@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Media Approval System - Integrated</title>
     <style>
       * {
         margin: 0;
@@ -48,6 +47,14 @@
       .config-section p {
         color: #555;
         line-height: 1.6;
+      }
+
+      .config-section code {
+        background: #fff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
       }
 
       .stats {
@@ -279,20 +286,24 @@
         padding: 20px;
         margin: 20px 0;
         font-family: "Courier New", monospace;
-        font-size: 13px;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
       }
 
       .debug-panel h3 {
-        margin-bottom: 15px;
-        color: #333;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           sans-serif;
+        margin-bottom: 10px;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Media Approval System</h1>
+      <p style="color: #666; margin-bottom: 20px">
+        Review and approve media from Airtable
+      </p>
 
       <div id="message"></div>
 
@@ -315,225 +326,193 @@
         </div>
       </div>
 
-      <div id="mediaGrid" class="media-grid">
-        <div class="loading">Loading media...</div>
+      <div class="debug-panel">
+        <h3>🐛 Debug Log</h3>
+        <div id="debugOutput"></div>
       </div>
+
+      <div id="loading" class="loading">Loading media from Airtable...</div>
+      <div id="mediaGrid" class="media-grid"></div>
 
       <div class="action-buttons">
-        <button id="syncButton" class="button">
-          Sync All Changes to Airtable
+        <button class="button" onclick="syncToAirtable()">
+          💾 Save to Airtable
         </button>
-        <button id="approveAllButton" class="button secondary">
-          Approve All
+        <button class="button secondary" onclick="approveAllMedia()">
+          ✓ Approve All
         </button>
-        <button id="clearButton" class="button secondary">
-          Reset All to Pending
+        <button class="button secondary" onclick="resetAllToPending()">
+          ↺ Reset All to Pending
         </button>
-      </div>
-
-      <div class="debug-panel">
-        <h3>🐛 Debug Console</h3>
-        <div id="debugOutput" style="color: #666">Ready to load data...</div>
       </div>
     </div>
 
     <script>
-      // CONFIGURATION
-      const CLOUDFLARE_CONFIG = {
-        workerUrl: "https://get-media-in-folder.tyler-chasse.workers.dev",
-        folderPath: "October_2025/Work_Order_10_19_2025_16:59:35/",
-      };
-
+      // ============================================
+      // CONFIGURATION - UPDATE THESE VALUES
+      // ============================================
       const AIRTABLE_CONFIG = {
         token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3",
         baseId: "appXteAFbB6ZwFuow",
-        tableName: "Work Order 10/19/2025 16:59:35",
+        tableName: "Work Order 10/24/2025 16:18:41",
+        
+        // Field names in your Airtable (adjust if different)
+        fields: {
+          contentUrl: "content_url", 
+          title: "title",
+          description: "description",
+          hashtags: "hashtags",
+          viralScore: "viral_score",
+        },
+
+        // Optional: Filter records (leave empty to get all)
+        filterFormula: "", // e.g., "AND({status} = 'Pending', {type} = 'Video')"
       };
 
-      // STATE
-      let cloudflareFiles = []; // Raw video files from Cloudflare
-      let airtableData = {}; // Metadata from Airtable, keyed by video_id
-      let mediaFiles = []; // Combined data
-      let approvalStates = {}; // Status for each video
+      // ============================================
+      // STATE MANAGEMENT
+      // ============================================
+      let mediaFiles = [];
+      let approvalStates = {}; // { fileId: { status, airtableRecordId } }
 
-      // INITIALIZE
-      function init() {
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      async function init() {
         console.log("🚀 Initializing Media Approval System");
-        console.log("📡 Cloudflare Worker:", CLOUDFLARE_CONFIG.workerUrl);
-        console.log("📊 Airtable Base:", AIRTABLE_CONFIG.baseId);
+        logDebug("System starting...");
 
-        // Load data from both sources
-        loadAllData();
-
-        // Setup button listeners
-        document
-          .getElementById("syncButton")
-          .addEventListener("click", syncToAirtable);
-        document
-          .getElementById("clearButton")
-          .addEventListener("click", resetAllToPending);
-        document
-          .getElementById("approveAllButton")
-          .addEventListener("click", approveAllMedia);
-      }
-
-      // LOAD DATA FROM BOTH SOURCES
-      async function loadAllData() {
         try {
-          showMessage("Loading data...", "info");
-          logDebug("Starting data load from Cloudflare and Airtable");
-
-          // Load in parallel
-          const [cfResult, atResult] = await Promise.allSettled([
-            loadFromCloudflare(),
-            loadFromAirtable(),
-          ]);
-
-          if (cfResult.status === "rejected") {
-            throw new Error(`Cloudflare: ${cfResult.reason}`);
-          }
-          if (atResult.status === "rejected") {
-            throw new Error(`Airtable: ${atResult.reason}`);
-          }
-
-          // Merge the data
-          mergeData();
-
-          renderMediaGrid();
-          updateStats();
-
-          showMessage(
-            `✓ Loaded ${mediaFiles.length} videos successfully!`,
-            "success"
-          );
-          logDebug(`Data merge complete: ${mediaFiles.length} videos ready`);
-        } catch (error) {
-          console.error("❌ Error loading data:", error);
-          showMessage(`Error: ${error.message}`, "error");
-          logDebug(`Load error: ${error.message}`);
-        }
-      }
-
-      // LOAD FROM CLOUDFLARE
-      async function loadFromCloudflare() {
-        logDebug("Loading videos from Cloudflare...");
-
-        const url = `${CLOUDFLARE_CONFIG.workerUrl}/list?prefix=${CLOUDFLARE_CONFIG.folderPath}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`Cloudflare HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        cloudflareFiles = data.files || [];
-        logDebug(`Loaded ${cloudflareFiles.length} files from Cloudflare`);
-        console.log("📦 Cloudflare files:", cloudflareFiles);
-
-        return cloudflareFiles;
-      }
-
-      // LOAD FROM AIRTABLE
-      async function loadFromAirtable() {
-        logDebug("Loading metadata from Airtable...");
-
-        const url = `https://api.airtable.com/v0/${
-          AIRTABLE_CONFIG.baseId
-        }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}`;
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Airtable HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Convert to lookup object keyed by video_id
-        airtableData = {};
-        data.records.forEach((record) => {
-          const fields = record.fields;
-          const videoId = fields.id;
+          await loadFromAirtable();
           
-          if (videoId != null) {
-            airtableData[videoId] = {
-              id: videoId,
-              recordId: record.id,
-              title: fields.title || "",
-              description:
-                fields.description?.value || fields.description || "",
-              hashtags:
-                fields.relevant_hashtags?.value ||
-                fields.relevant_hashtags ||
-                "",
-              status: fields.status || "Pending",
-            };
+          document.getElementById("loading").style.display = "none";
+          
+          if (mediaFiles.length === 0) {
+            showMessage("No media records found in Airtable", "info");
+          } else {
+            renderMediaGrid();
+            updateStats();
+            showMessage(`Loaded ${mediaFiles.length} media files`, "success");
           }
-        });
-
-        logDebug(
-          `Loaded ${Object.keys(airtableData).length} records from Airtable`
-        );
-        console.log("📊 Airtable data:", airtableData);
-
-        return airtableData;
+        } catch (error) {
+          console.error("❌ Initialization error:", error);
+          document.getElementById("loading").style.display = "none";
+          showMessage(`Error: ${error.message}`, "error");
+          logDebug(`Init error: ${error.message}`);
+        }
       }
 
-      // MERGE CLOUDFLARE + AIRTABLE DATA
-      function mergeData() {
-        logDebug("Merging Cloudflare and Airtable data...");
+      // ============================================
+      // LOAD FROM AIRTABLE
+      // ============================================
+      async function loadFromAirtable() {
+        logDebug("Fetching records from Airtable...");
 
-        mediaFiles = cloudflareFiles.map((file) => {
-          // Use file.id or file.name as the lookup key
-          const lookupKey = file.name.substring(0, file.name.lastIndexOf("."));
-          const metadata = airtableData[lookupKey] || {};
-          console.log("Lookup Key:", lookupKey, "Metadata:", metadata);
-          // Determine content type
-          const isVideo =
-            file.contentType?.startsWith("video/") ||
-            file.url?.includes(".mp4") ||
-            file.name?.endsWith(".mp4");
+        try {
+          let allRecords = [];
+          let offset = null;
 
-          const merged = {
-            // From Cloudflare
-            name: file.name,
-            url: file.url,
-            size: file.size,
-            uploaded: file.uploaded,
-            contentType: file.contentType,
-            type: isVideo ? "video" : "image",
+          // Fetch all records (handle pagination)
+          do {
+            let url = `https://api.airtable.com/v0/${
+              AIRTABLE_CONFIG.baseId
+            }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}?`;
 
-            // From Airtable
-            id: metadata.id,
-            airtableRecordId: metadata.recordId || null,
-            title: metadata.title || file.name,
-            description: metadata.description || "",
-            hashtags: metadata.hashtags || "",
-            status: metadata.status || "Pending",
-          };
+            // Add filter if specified
+            if (AIRTABLE_CONFIG.filterFormula) {
+              url += `filterByFormula=${encodeURIComponent(
+                AIRTABLE_CONFIG.filterFormula
+              )}&`;
+            }
 
-          // Initialize approval state
-          approvalStates[file.id] = {
-            status: (metadata.status || "Pending").toLowerCase(),
-            airtableRecordId: metadata.recordId,
-          };
+            // Add offset for pagination
+            if (offset) {
+              url += `offset=${offset}`;
+            }
 
-          return merged;
-        });
+            const response = await fetch(url, {
+              headers: {
+                Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+              },
+            });
 
-        logDebug(`Merged ${mediaFiles.length} files with metadata`);
-        console.log("🎬 Merged media files:", mediaFiles);
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(
+                `Airtable API error: ${response.status} - ${errorText}`
+              );
+            }
+
+            const data = await response.json();
+            allRecords = allRecords.concat(data.records);
+            offset = data.offset;
+
+            logDebug(
+              `Fetched ${data.records.length} records (total: ${allRecords.length})`
+            );
+          } while (offset);
+
+          console.log("📦 Raw Airtable records:", allRecords);
+
+          // Transform Airtable records to our format
+          mediaFiles = allRecords
+            .map((record) => {
+              const fields = record.fields;
+              const contentUrl = fields[AIRTABLE_CONFIG.fields.contentUrl];
+
+              // Skip records without a content URL
+              if (!contentUrl) {
+                logDebug(`Skipping record ${record.id} - no content_url`);
+                return null;
+              }
+
+              // Determine file type from URL
+              const url = contentUrl;
+              const fileName = url.split("/").pop().split("?")[0];
+              const ext = fileName.split(".").pop().toLowerCase();
+
+              let type = "file";
+              if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) {
+                type = "image";
+              } else if (["mp4", "webm", "mov", "avi", "mkv"].includes(ext)) {
+                type = "video";
+              }
+
+              const fileId = `file_${record.id}`;
+              const status = (
+                fields[AIRTABLE_CONFIG.fields.status] || "Pending"
+              ).toLowerCase();
+
+              // Store approval state
+              approvalStates[fileId] = {
+                status: status,
+                airtableRecordId: record.id,
+              };
+
+              return {
+                id: fileId,
+                airtableRecordId: record.id,
+                url: url,
+                type: type,
+                title: fields[AIRTABLE_CONFIG.fields.title] || fileName,
+                description: fields[AIRTABLE_CONFIG.fields.description] || "",
+                hashtags: fields[AIRTABLE_CONFIG.fields.hashtags] || "",
+              };
+            })
+            .filter((file) => file !== null);
+
+          logDebug(`Loaded ${mediaFiles.length} valid media files`);
+          console.log("🎬 Processed media files:", mediaFiles);
+          console.log("📊 Approval states:", approvalStates);
+        } catch (error) {
+          console.error("Error loading from Airtable:", error);
+          throw error;
+        }
       }
 
+      // ============================================
       // RENDER MEDIA GRID
+      // ============================================
       function renderMediaGrid() {
         const grid = document.getElementById("mediaGrid");
 
@@ -550,7 +529,9 @@
         });
       }
 
+      // ============================================
       // CREATE MEDIA CARD
+      // ============================================
       function createMediaCard(file) {
         const card = document.createElement("div");
         card.className = "media-card";
@@ -610,23 +591,22 @@
                             <button class="status-button ${
                               status === "approved" ? "active approved" : ""
                             }" 
-                                    onclick="setStatus('${
-                                      file.id
-                                    }', 'approved')">
+                                    data-file-id="${file.id}"
+                                    data-status="approved">
                                 ✓ Approve
                             </button>
                             <button class="status-button ${
                               status === "pending" ? "active pending" : ""
                             }" 
-                                    onclick="setStatus('${
-                                      file.id
-                                    }', 'pending')">
+                                    data-file-id="${file.id}"
+                                    data-status="pending">
                                 ○ Pending
                             </button>
                             <button class="status-button ${
                               status === "denied" ? "active denied" : ""
                             }" 
-                                    onclick="setStatus('${file.id}', 'denied')">
+                                    data-file-id="${file.id}"
+                                    data-status="denied">
                                 ✕ Deny
                             </button>
                         </div>
@@ -634,11 +614,23 @@
                 </div>
             `;
 
+        // Add event listeners to status buttons
+        const statusButtons = card.querySelectorAll(".status-button");
+        statusButtons.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const fileId = this.dataset.fileId;
+            const status = this.dataset.status;
+            setStatus(fileId, status);
+          });
+        });
+
         return card;
       }
 
+      // ============================================
       // SET STATUS
-      window.setStatus = function (fileId, status) {
+      // ============================================
+      function setStatus(fileId, status) {
         console.log(`📝 Setting status for ${fileId}:`, status);
 
         if (!approvalStates[fileId]) {
@@ -660,23 +652,18 @@
         const buttons = card.querySelectorAll(".status-button");
         buttons.forEach((btn) => {
           btn.classList.remove("active", "approved", "pending", "denied");
-          if (btn.textContent.includes("Approve") && status === "approved") {
-            btn.classList.add("active", "approved");
-          } else if (
-            btn.textContent.includes("Pending") &&
-            status === "pending"
-          ) {
-            btn.classList.add("active", "pending");
-          } else if (btn.textContent.includes("Deny") && status === "denied") {
-            btn.classList.add("active", "denied");
+          if (btn.dataset.status === status) {
+            btn.classList.add("active", status);
           }
         });
 
         updateStats();
         logDebug(`Status changed: ${fileId} → ${status}`);
-      };
+      }
 
+      // ============================================
       // SYNC TO AIRTABLE
+      // ============================================
       async function syncToAirtable() {
         showMessage("Syncing to Airtable...", "info");
         logDebug("Starting sync to Airtable...");
@@ -684,13 +671,13 @@
         try {
           const updates = [];
 
-          // Only update records that have an Airtable record ID
+          // Prepare updates for all records
           for (const [fileId, state] of Object.entries(approvalStates)) {
             if (state.airtableRecordId) {
               updates.push({
                 id: state.airtableRecordId,
                 fields: {
-                  status:
+                  [AIRTABLE_CONFIG.fields.status]:
                     state.status.charAt(0).toUpperCase() +
                     state.status.slice(1),
                 },
@@ -699,18 +686,21 @@
           }
 
           if (updates.length === 0) {
-            showMessage("No Airtable records to update", "info");
+            showMessage("No records to update", "info");
             return;
           }
 
           // Batch updates (max 10 per request)
           const batchSize = 10;
+          let successCount = 0;
+
           for (let i = 0; i < updates.length; i += batchSize) {
             const batch = updates.slice(i, i + batchSize);
 
             const url = `https://api.airtable.com/v0/${
               AIRTABLE_CONFIG.baseId
             }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}`;
+            
             const response = await fetch(url, {
               method: "PATCH",
               headers: {
@@ -721,9 +711,11 @@
             });
 
             if (!response.ok) {
-              throw new Error(`Airtable API error: ${response.status}`);
+              const errorText = await response.text();
+              throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
             }
 
+            successCount += batch.length;
             logDebug(
               `Synced batch ${Math.floor(i / batchSize) + 1} (${
                 batch.length
@@ -732,10 +724,10 @@
           }
 
           showMessage(
-            `✓ Successfully synced ${updates.length} records to Airtable!`,
+            `✓ Successfully synced ${successCount} records to Airtable!`,
             "success"
           );
-          logDebug(`Sync complete: ${updates.length} records updated`);
+          logDebug(`Sync complete: ${successCount} records updated`);
         } catch (error) {
           console.error("Error syncing to Airtable:", error);
           showMessage(`Error: ${error.message}`, "error");
@@ -743,7 +735,9 @@
         }
       }
 
-      // RESET ALL TO PENDING
+      // ============================================
+      // BATCH ACTIONS
+      // ============================================
       function resetAllToPending() {
         mediaFiles.forEach((file) => {
           setStatus(file.id, "pending");
@@ -751,7 +745,6 @@
         showMessage("All media reset to pending", "info");
       }
 
-      // APPROVE ALL
       function approveAllMedia() {
         mediaFiles.forEach((file) => {
           setStatus(file.id, "approved");
@@ -759,7 +752,9 @@
         showMessage("All media approved!", "success");
       }
 
+      // ============================================
       // UPDATE STATS
+      // ============================================
       function updateStats() {
         const totalCount = mediaFiles.length;
         let approvedCount = 0;
@@ -778,7 +773,9 @@
         document.getElementById("deniedCount").textContent = deniedCount;
       }
 
-      // SHOW MESSAGE
+      // ============================================
+      // UI HELPERS
+      // ============================================
       function showMessage(text, type = "info") {
         const messageDiv = document.getElementById("message");
         messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
@@ -787,7 +784,6 @@
         }, 5000);
       }
 
-      // LOG DEBUG
       function logDebug(message) {
         const debugOutput = document.getElementById("debugOutput");
         const timestamp = new Date().toLocaleTimeString();
@@ -801,7 +797,9 @@
         }
       }
 
+      // ============================================
       // START
+      // ============================================
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);
       } else {
