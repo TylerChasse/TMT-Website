@@ -413,13 +413,19 @@
         // Work Orders table configuration
         workOrdersTable: {
           tableName: "Work Orders", // Name of the Work Orders table
-          nameField: "Name", // Field that contains "Work Order date time"
+          nameField: "name", // Field that contains "Work Order date time"
           approvedCheckboxField: "approved", // Checkbox field to update
         },
 
         // Work Order identifier (how to find the Work Order record)
         // Set this to the exact Work Order name from your Work Orders table
         workOrderName: "Work Order 10/24/2025 16:18:41", // UPDATE THIS to match your Work Order name
+
+        // n8n webhook configuration
+        n8nWebhook: {
+          enabled: true, // Set to false to disable n8n integration
+          url: "https://talentedmarketingtalents.app.n8n.cloud/webhook-test/intake/approvals", // e.g., "https://your-n8n-instance.com/webhook/approval"
+        },
 
         // Optional: Filter records (leave empty to get all)
         filterFormula: "", // e.g., "AND({status} = 'Pending', {type} = 'Video')"
@@ -827,21 +833,72 @@
           // Always update Work Order checkbox when saving (regardless of approval status)
           const workOrderUpdated = await updateWorkOrder();
 
+          // Trigger n8n webhook with approved content
+          await triggerN8nWorkflow();
+
           // Show success message
-          if (workOrderUpdated) {
-            showMessage(
-              `✓ Successfully submitted ${successCount} approvals!`,
-              "success"
-            );
-          } else {
-            showMessage(
-              `✓ Successfully submitted ${successCount} approvals!`,
-              "success"
-            );
-          }
+          showMessage(
+            `✓ Successfully submitted ${successCount} approvals!`,
+            "success"
+          );
 
         } catch (error) {
           showMessage(`Error: ${error.message}`, "error");
+        }
+      }
+
+      // ============================================
+      // TRIGGER N8N WORKFLOW
+      // ============================================
+      async function triggerN8nWorkflow() {
+        // Skip if n8n webhook is disabled
+        if (!AIRTABLE_CONFIG.n8nWebhook.enabled || !AIRTABLE_CONFIG.n8nWebhook.url) {
+          return;
+        }
+
+        try {
+          // Get all approved content
+          const approvedContent = mediaFiles.filter(file => 
+            approvalStates[file.id]?.status === "approved"
+          );
+
+          if (approvedContent.length === 0) {
+            return; // No approved content to send
+          }
+
+          // Prepare payload for n8n
+          const payload = {
+            workOrderName: AIRTABLE_CONFIG.workOrderName,
+            timestamp: new Date().toISOString(),
+            totalApproved: approvedContent.length,
+            approvedContent: approvedContent.map(file => ({
+              id: file.airtableRecordId,
+              title: file.title,
+              description: file.description,
+              url: file.url,
+              type: file.type,
+              hashtags: file.hashtags,
+              viralScore: file.viralScore,
+              viralReason: file.viralReason,
+            })),
+          };
+
+          // Send to n8n webhook
+          const response = await fetch(AIRTABLE_CONFIG.n8nWebhook.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`n8n webhook failed: ${response.status}`);
+          }
+
+        } catch (error) {
+          // Silently fail - n8n integration is optional
+          // Don't disrupt the main approval flow
         }
       }
 
