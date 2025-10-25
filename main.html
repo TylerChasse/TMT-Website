@@ -32,32 +32,6 @@
         color: #333;
       }
 
-      .config-section {
-        background: #e3f2fd;
-        border: 2px solid #90caf9;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-      }
-
-      .config-section h3 {
-        margin-bottom: 10px;
-        color: #1976d2;
-      }
-
-      .config-section p {
-        color: #555;
-        line-height: 1.6;
-      }
-
-      .config-section code {
-        background: #fff;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: "Courier New", monospace;
-        font-size: 13px;
-      }
-
       .stats {
         display: flex;
         gap: 20px;
@@ -347,24 +321,6 @@
         color: #666;
       }
 
-      .debug-panel {
-        background: #f9f9f9;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-        font-family: "Courier New", monospace;
-        font-size: 12px;
-        max-height: 300px;
-        overflow-y: auto;
-      }
-
-      .debug-panel h3 {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        margin-bottom: 10px;
-      }
-
       /* Mobile responsiveness */
       @media (max-width: 768px) {
         .media-grid {
@@ -397,8 +353,10 @@
     <div class="container">
       <h1>Media Approval System</h1>
       <p style="color: #666; margin-bottom: 20px">
-        Review and approve media from Airtable
+        Review and approve media content
       </p>
+
+      <div id="message"></div>
 
       <div class="stats">
         <div class="stat-item">
@@ -419,23 +377,15 @@
         </div>
       </div>
 
-      <div class="debug-panel">
-        <h3>Debug Log</h3>
-        <div id="debugOutput"></div>
-      </div>
-
       <div id="loading" class="loading">Loading media from Airtable...</div>
       <div id="mediaGrid" class="media-grid"></div>
 
       <div class="action-buttons">
-        <button class="button" onclick="syncToAirtable()">
-          💾 Save to Airtable
-        </button>
         <button class="button secondary" onclick="approveAllMedia()">
           ✓ Approve All
         </button>
-        <button class="button secondary" onclick="resetAllToPending()">
-          ↺ Reset All to Pending
+        <button class="button" onclick="syncToAirtable()">
+          📤 Submit Approvals
         </button>
       </div>
     </div>
@@ -452,13 +402,24 @@
         // Field names in your Airtable (adjust if different)
         fields: {
           contentUrl: "content_url", // Required: URL to media file
-          status: "status", // Required: approval status
+          status: "status", // Required: approval status (single select field)
           title: "title", // Optional
           description: "description", // Optional
           hashtags: "hashtags", // Optional
           viralScore: "viral_score", // Optional
           viralReason: "viral_reason", // Optional
         },
+
+        // Work Orders table configuration
+        workOrdersTable: {
+          tableName: "Work Orders", // Name of the Work Orders table
+          nameField: "Name", // Field that contains "Work Order date time"
+          approvedCheckboxField: "approved", // Checkbox field to update
+        },
+
+        // Work Order identifier (how to find the Work Order record)
+        // Set this to the exact Work Order name from your Work Orders table
+        workOrderName: "Work Order 10/24/2025 16:18:41", // UPDATE THIS to match your Work Order name
 
         // Optional: Filter records (leave empty to get all)
         filterFormula: "", // e.g., "AND({status} = 'Pending', {type} = 'Video')"
@@ -469,31 +430,27 @@
       // ============================================
       let mediaFiles = [];
       let approvalStates = {}; // { fileId: { status, airtableRecordId } }
+      let workOrderRecordId = null; // Store the Work Order record ID
 
       // ============================================
       // INITIALIZATION
       // ============================================
       async function init() {
-        console.log("🚀 Initializing Media Approval System");
-        logDebug("System starting...");
-
         try {
           await loadFromAirtable();
           
           document.getElementById("loading").style.display = "none";
           
           if (mediaFiles.length === 0) {
-            showMessage("No media records found in Airtable", "info");
+            showMessage("No media records found", "info");
           } else {
             renderMediaGrid();
             updateStats();
             showMessage(`Loaded ${mediaFiles.length} media files`, "success");
           }
         } catch (error) {
-          console.error("❌ Initialization error:", error);
           document.getElementById("loading").style.display = "none";
-          showMessage(`Error: ${error.message}`, "error");
-          logDebug(`Init error: ${error.message}`);
+          showMessage(`Error loading media: ${error.message}`, "error");
         }
       }
 
@@ -501,8 +458,6 @@
       // LOAD FROM AIRTABLE
       // ============================================
       async function loadFromAirtable() {
-        logDebug("Fetching records from Airtable...");
-
         try {
           let allRecords = [];
           let offset = null;
@@ -541,13 +496,7 @@
             const data = await response.json();
             allRecords = allRecords.concat(data.records);
             offset = data.offset;
-
-            logDebug(
-              `Fetched ${data.records.length} records (total: ${allRecords.length})`
-            );
           } while (offset);
-
-          console.log("📦 Raw Airtable records:", allRecords);
 
           // Transform Airtable records to our format
           mediaFiles = allRecords
@@ -557,7 +506,6 @@
 
               // Skip records without a content URL
               if (!contentUrl) {
-                logDebug(`Skipping record ${record.id} - no content_url`);
                 return null;
               }
 
@@ -596,14 +544,52 @@
                 viralReason: fields[AIRTABLE_CONFIG.fields.viralReason] || "",
               };
             })
-            .filter((file) => file !== null);
+            .filter((file) => file !== null)
+            .sort((a, b) => {
+              // Sort by viral score descending (highest first)
+              // Handle null/undefined scores by treating them as -1
+              const scoreA = a.viralScore !== null && a.viralScore !== undefined ? parseFloat(a.viralScore) : -1;
+              const scoreB = b.viralScore !== null && b.viralScore !== undefined ? parseFloat(b.viralScore) : -1;
+              return scoreB - scoreA;
+            });
 
-          logDebug(`Loaded ${mediaFiles.length} valid media files`);
-          console.log("🎬 Processed media files:", mediaFiles);
-          console.log("📊 Approval states:", approvalStates);
+          // Find Work Order record if workOrderName is specified
+          if (AIRTABLE_CONFIG.workOrderName) {
+            await findWorkOrderRecord();
+          }
         } catch (error) {
-          console.error("Error loading from Airtable:", error);
           throw error;
+        }
+      }
+
+      // ============================================
+      // FIND WORK ORDER RECORD
+      // ============================================
+      async function findWorkOrderRecord() {
+        try {
+          const url = `https://api.airtable.com/v0/${
+            AIRTABLE_CONFIG.baseId
+          }/${encodeURIComponent(AIRTABLE_CONFIG.workOrdersTable.tableName)}?filterByFormula=${encodeURIComponent(
+            `{${AIRTABLE_CONFIG.workOrdersTable.nameField}} = '${AIRTABLE_CONFIG.workOrderName}'`
+          )}`;
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to find Work Order: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          if (data.records && data.records.length > 0) {
+            workOrderRecordId = data.records[0].id;
+          }
+        } catch (error) {
+          // Silently fail - Work Order update is optional
         }
       }
 
@@ -674,7 +660,7 @@
           
           viralScoreBadge = `
             <div class="viral-score-badge ${scoreLevel}" data-reason="${reason.replace(/"/g, '&quot;')}" title="Hover for details">
-              Virality Score: ${file.viralScore}
+              🔥 ${file.viralScore}
             </div>
           `;
         }
@@ -757,8 +743,6 @@
       // SET STATUS
       // ============================================
       function setStatus(fileId, status) {
-        console.log(`📝 Setting status for ${fileId}:`, status);
-
         if (!approvalStates[fileId]) {
           approvalStates[fileId] = {};
         }
@@ -784,28 +768,24 @@
         });
 
         updateStats();
-        logDebug(`Status changed: ${fileId} → ${status}`);
       }
 
       // ============================================
       // SYNC TO AIRTABLE
       // ============================================
       async function syncToAirtable() {
-        showMessage("Syncing to Airtable...", "info");
-        logDebug("Starting sync to Airtable...");
+        showMessage("Submitting approvals...", "info");
 
         try {
           const updates = [];
 
-          // Prepare updates for all records
+          // Prepare updates for all content records
           for (const [fileId, state] of Object.entries(approvalStates)) {
             if (state.airtableRecordId) {
               updates.push({
                 id: state.airtableRecordId,
                 fields: {
-                  [AIRTABLE_CONFIG.fields.status]:
-                    state.status.charAt(0).toUpperCase() +
-                    state.status.slice(1),
+                  [AIRTABLE_CONFIG.fields.status]: state.status, // lowercase: "approved", "denied", "pending"
                 },
               });
             }
@@ -816,7 +796,7 @@
             return;
           }
 
-          // Batch updates (max 10 per request)
+          // Batch updates to content table (max 10 per request)
           const batchSize = 10;
           let successCount = 0;
 
@@ -842,35 +822,77 @@
             }
 
             successCount += batch.length;
-            logDebug(
-              `Synced batch ${Math.floor(i / batchSize) + 1} (${
-                batch.length
-              } records)`
+          }
+
+          // Always update Work Order checkbox when saving (regardless of approval status)
+          const workOrderUpdated = await updateWorkOrder();
+
+          // Show success message
+          if (workOrderUpdated) {
+            showMessage(
+              `✓ Successfully submitted ${successCount} approvals!`,
+              "success"
+            );
+          } else {
+            showMessage(
+              `✓ Successfully submitted ${successCount} approvals!`,
+              "success"
             );
           }
 
-          showMessage(
-            `✓ Successfully synced ${successCount} records to Airtable!`,
-            "success"
-          );
-          logDebug(`Sync complete: ${successCount} records updated`);
         } catch (error) {
-          console.error("Error syncing to Airtable:", error);
           showMessage(`Error: ${error.message}`, "error");
-          logDebug(`Sync error: ${error.message}`);
+        }
+      }
+
+      // ============================================
+      // UPDATE WORK ORDER
+      // ============================================
+      async function updateWorkOrder() {
+        try {
+          // Use Work Order found by name
+          if (!workOrderRecordId) {
+            return false;
+          }
+
+          // Update the Work Order checkbox
+          const url = `https://api.airtable.com/v0/${
+            AIRTABLE_CONFIG.baseId
+          }/${encodeURIComponent(AIRTABLE_CONFIG.workOrdersTable.tableName)}`;
+
+          const response = await fetch(url, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              records: [
+                {
+                  id: workOrderRecordId,
+                  fields: {
+                    [AIRTABLE_CONFIG.workOrdersTable.approvedCheckboxField]: true,
+                  },
+                },
+              ],
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to update Work Order: ${response.status}`);
+          }
+
+          return true;
+
+        } catch (error) {
+          // Silently fail - Work Order update is optional
+          return false;
         }
       }
 
       // ============================================
       // BATCH ACTIONS
       // ============================================
-      function resetAllToPending() {
-        mediaFiles.forEach((file) => {
-          setStatus(file.id, "pending");
-        });
-        showMessage("All media reset to pending", "info");
-      }
-
       function approveAllMedia() {
         mediaFiles.forEach((file) => {
           setStatus(file.id, "approved");
@@ -908,19 +930,6 @@
         setTimeout(() => {
           messageDiv.innerHTML = "";
         }, 5000);
-      }
-
-      function logDebug(message) {
-        const debugOutput = document.getElementById("debugOutput");
-        const timestamp = new Date().toLocaleTimeString();
-        debugOutput.innerHTML =
-          `[${timestamp}] ${message}<br>` + debugOutput.innerHTML;
-
-        // Keep only last 20 messages
-        const lines = debugOutput.innerHTML.split("<br>");
-        if (lines.length > 20) {
-          debugOutput.innerHTML = lines.slice(0, 20).join("<br>");
-        }
       }
 
       // ============================================
