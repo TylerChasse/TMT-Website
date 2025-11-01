@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Media Approval System - Airtable</title>
+    <title>Media Approval Page</title>
     <style>
       * {
         margin: 0;
@@ -291,30 +291,6 @@
         cursor: not-allowed;
       }
 
-      .message {
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-      }
-
-      .message.success {
-        background: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-      }
-
-      .message.error {
-        background: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-      }
-
-      .message.info {
-        background: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-      }
-
       .loading {
         text-align: center;
         padding: 40px;
@@ -355,8 +331,6 @@
       <p style="color: #666; margin-bottom: 20px">
         Review and approve media content
       </p>
-
-      <div id="message"></div>
 
       <div class="stats">
         <div class="stat-item">
@@ -462,13 +436,13 @@
           loadURLParameters();
           
           if (!AIRTABLE_CONFIG.baseId) {
-            showMessage("⚠️ Missing Airtable Base ID. Please provide baseId in URL.", "error");
+            alert("⚠️ Missing Airtable Base ID. Please provide baseId in URL.");
             document.getElementById("loading").style.display = "none";
             return;
           }
 
           if (!AIRTABLE_CONFIG.tableName) {
-            showMessage("⚠️ Missing Table Name. Please provide tableName in URL.", "error");
+            alert("⚠️ Missing Table Name. Please provide tableName in URL.");
             document.getElementById("loading").style.display = "none";
             return;
           }
@@ -478,15 +452,14 @@
           document.getElementById("loading").style.display = "none";
           
           if (mediaFiles.length === 0) {
-            showMessage("No media records found", "info");
+            document.getElementById("mediaGrid").innerHTML = '<div class="loading">No media records found</div>';
           } else {
             renderMediaGrid();
             updateStats();
-            showMessage(`Loaded ${mediaFiles.length} media files`, "success");
           }
         } catch (error) {
           document.getElementById("loading").style.display = "none";
-          showMessage(`Error loading media: ${error.message}`, "error");
+          alert(`Error loading media: ${error.message}`);
         }
       }
 
@@ -810,8 +783,6 @@
       // SYNC TO AIRTABLE
       // ============================================
       async function syncToAirtable() {
-        showMessage("Submitting approvals...", "info");
-
         try {
           const updates = [];
 
@@ -828,7 +799,7 @@
           }
 
           if (updates.length === 0) {
-            showMessage("No records to update", "info");
+            alert("No records to update");
             return;
           }
 
@@ -867,13 +838,10 @@
           await triggerN8nWorkflow();
 
           // Show success message
-          showMessage(
-            `✓ Successfully submitted ${successCount} approvals!`,
-            "success"
-          );
+          alert(`✓ Successfully submitted ${successCount} approvals!`);
 
         } catch (error) {
-          showMessage(`Error: ${error.message}`, "error");
+          alert(`Error: ${error.message}`);
         }
       }
 
@@ -984,7 +952,6 @@
         mediaFiles.forEach((file) => {
           setStatus(file.id, "approved");
         });
-        showMessage("All media approved!", "success");
       }
 
       // ============================================
@@ -1006,17 +973,6 @@
         document.getElementById("approvedCount").textContent = approvedCount;
         document.getElementById("pendingCount").textContent = pendingCount;
         document.getElementById("deniedCount").textContent = deniedCount;
-      }
-
-      // ============================================
-      // UI HELPERS
-      // ============================================
-      function showMessage(text, type = "info") {
-        const messageDiv = document.getElementById("message");
-        messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
-        setTimeout(() => {
-          messageDiv.innerHTML = "";
-        }, 5000);
       }
 
       // ============================================
