@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Work Orders Dashboard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #f7fafc;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        border-left: 4px solid #3b82f6;
+      }
+
+      h1 {
+        color: #2d3748;
+        margin-bottom: 10px;
+        font-size: 32px;
+      }
+
+      .subtitle {
+        color: #718096;
+        font-size: 16px;
+      }
+
+      .work-orders-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .work-order-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .work-order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .work-order-header {
+        padding: 20px;
+        border-bottom: 2px solid #f7fafc;
+      }
+
+      .work-order-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+      }
+
+      .work-order-date {
+        font-size: 14px;
+        color: #718096;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .work-order-body {
+        padding: 20px;
+      }
+
+      .work-order-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+
+      .mini-stat {
+        text-align: center;
+        padding: 12px;
+        background: #f7fafc;
+        border-radius: 8px;
+      }
+
+      .mini-stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #3b82f6;
+      }
+
+      .mini-stat-label {
+        font-size: 12px;
+        color: #718096;
+        margin-top: 4px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-approved {
+        background: #c6f6d5;
+        color: #22543d;
+      }
+
+      .status-pending {
+        background: #fef3c7;
+        color: #78350f;
+      }
+
+      .status-in-progress {
+        background: #dbeafe;
+        color: #1e3a8a;
+      }
+
+      .work-order-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+      }
+
+      .btn-secondary {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+      }
+
+      .btn-secondary:hover {
+        background: #edf2f7;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: #4a5568;
+        font-size: 18px;
+      }
+
+      .spinner {
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .message {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      .message.success {
+        background: #c6f6d5;
+        color: #22543d;
+        border: 1px solid #9ae6b4;
+      }
+
+      .message.error {
+        background: #fed7d7;
+        color: #742a2a;
+        border: 1px solid #fc8181;
+      }
+
+      .message.info {
+        background: #bee3f8;
+        color: #2c5282;
+        border: 1px solid #90cdf4;
+      }
+
+      .empty-state {
+        background: white;
+        padding: 60px 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+
+      .empty-state-title {
+        font-size: 24px;
+        color: #2d3748;
+        margin-bottom: 10px;
+      }
+
+      .empty-state-text {
+        color: #718096;
+        font-size: 16px;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .work-orders-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .work-order-actions {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Work Orders</h1>
+        <p class="subtitle">View and manage your content work orders</p>
+      </div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <div>Loading your work orders...</div>
+      </div>
+
+      <div id="workOrdersGrid" class="work-orders-grid"></div>
+    </div>
+
+    <script>
+      // ============================================
+      // CONFIGURATION - AUTO-LOADED FROM GHL
+      // ============================================
+      const CONFIG = {
+        airtableToken: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
+        baseId: "", // Will be loaded from GHL contact data
+        workOrdersTableName: "Work Orders", // Name of your Work Orders table
+        selectedWorkOrderName: "", // selected work order for approval
+        
+        // Field names in your Work Orders table
+        fields: {
+          name: "name", // Work order name/title field
+          month: "month",
+          year: "year",
+          input_video_url: "input_video_url",
+          status: "status",
+          approved: "approved", // Checkbox field
+        },
+      
+        // Approval page URL template (use tableName parameter)
+        // The work order name will be used as the table name in Airtable
+        approvalPageUrl: "http://127.0.0.1:5500/approval.html?baseId={baseId}&tableName={workOrderName}",
+      };
+
+      // ============================================
+      // STATE
+      // ============================================
+      let workOrders = [];
+
+      // ============================================
+      // UI HELPERS
+      // ============================================
+      function showMessage(text, type = "info") {
+        const messageDiv = document.getElementById("message");
+        messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+        setTimeout(() => {
+          messageDiv.innerHTML = "";
+        }, 5000);
+      }
+
+      // ============================================
+      // LOAD GHL CONTACT DATA
+      // ============================================
+      function loadGHLContactData() {
+        CONFIG.baseId = "appXteAFbB6ZwFuow";
+        
+        // Check if GHL injected contact data
+        if (window.ghlContactData) {
+          console.log("GHL Contact Data:", window.ghlContactData);
+          
+          if (window.ghlContactData.airtableBaseId) {
+            CONFIG.baseId = window.ghlContactData.airtableBaseId;
+          } else {
+          }
+
+          return true;
+        } else {
+        }
+        
+        // Fallback: Check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const baseIdParam = urlParams.get('baseId') || urlParams.get('base_id');
+        
+        if (baseIdParam) {
+          CONFIG.baseId = baseIdParam;
+          return true;
+        } else {
+        }
+        return false;
+      }
+
+      // ============================================
+      // LOAD WORK ORDERS FROM AIRTABLE
+      // ============================================
+      async function loadWorkOrders() {        
+        try {
+          let allRecords = [];
+          let offset = null;
+
+          // Fetch all records (handle pagination)
+          do {
+            let url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(
+              CONFIG.workOrdersTableName
+            )}?sort[0][field]=${encodeURIComponent(CONFIG.fields.name)}&sort[0][direction]=desc`;
+
+            // Add offset for pagination
+            if (offset) {
+              url += `&offset=${offset}`;
+            }
+
+            const response = await fetch(url, {
+              headers: {
+                Authorization: `Bearer ${CONFIG.airtableToken}`,
+              },
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(
+                `Airtable API error: ${response.status} - ${errorText}`
+              );
+            }
+
+            const data = await response.json();
+            allRecords = allRecords.concat(data.records);
+            offset = data.offset;
+          } while (offset);
+
+          // Transform Airtable records
+          workOrders = allRecords.map((record) => {
+            const fields = record.fields;
+            
+            return {
+              id: record.id,
+              name: fields[CONFIG.fields.name] || "Untitled Work Order",
+              month: fields[CONFIG.fields.month] || "",
+              year: fields[CONFIG.fields.year] || "",
+              inputVideoUrl: fields[CONFIG.fields.input_video_url] || "",
+              status: fields[CONFIG.fields.status] || "",
+              approved: fields[CONFIG.fields.approved] || false,
+              createdTime: record.createdTime, // Use Airtable's auto-generated created time
+              // Store all fields for additional data
+              allFields: fields,
+            };
+          });
+
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      // ============================================
+      // RENDER WORK ORDERS GRID
+      // ============================================
+      function renderWorkOrders() {
+        const grid = document.getElementById("workOrdersGrid");
+
+        if (workOrders.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <div class="empty-state-title">No Work Orders Found</div>
+              <div class="empty-state-text">Your work orders will appear here once they're created.</div>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = "";
+
+        workOrders.forEach((workOrder) => {
+          const card = createWorkOrderCard(workOrder);
+          grid.appendChild(card);
+        });
+      }
+
+      // ============================================
+      // CREATE WORK ORDER CARD
+      // ============================================
+      function createWorkOrderCard(workOrder) {
+        const card = document.createElement("div");
+        card.className = "work-order-card";
+
+        // Status badge
+        let statusBadge = '';
+        if (workOrder.approved) {
+          statusBadge = '<span class="status-badge status-approved">✓ Approved</span>';
+        } else if (workOrder.status) {
+          const statusClass = workOrder.status === 'Awaiting Review'
+            ? 'status-pending'
+            : 'status-in-progress';
+          statusBadge = `<span class="status-badge ${statusClass}">${workOrder.status}</span>`;
+        } else {
+          statusBadge = '<span class="status-badge status-pending">⏳ Pending</span>';
+        }
+
+        // Build approval page URL - pass work order name as tableName
+        const approvalUrl = CONFIG.approvalPageUrl.replace(
+          "{workOrderName}",
+          encodeURIComponent(workOrder.name)
+        ).replace(
+          "{baseId}",
+          encodeURIComponent(CONFIG.baseId)
+        );
+
+        // Show input video URL if available
+        const videoInfo = workOrder.inputVideoUrl 
+          ? `<div style="margin-top: 10px; padding: 10px; background: #f7fafc; border-radius: 6px; font-size: 12px; color: #718096;">
+               <strong>Source:</strong> ${workOrder.inputVideoUrl.length > 50 ? workOrder.inputVideoUrl.substring(0, 50) + '...' : workOrder.inputVideoUrl}
+             </div>`
+          : '';
+
+        // Show Approve button only for "Awaiting Review" status
+        const showApproveButton = workOrder.status === 'Awaiting Review';
+        
+        const actionButtons = showApproveButton
+          ? `<div class="work-order-actions">
+               <a href="${approvalUrl}" class="btn btn-primary">
+                 ✓ Approve Media
+               </a>
+             </div>`:``;
+
+        card.innerHTML = `
+          <div class="work-order-header">
+            <div class="work-order-name">${workOrder.name}</div>
+          </div>
+          <div class="work-order-body">
+            <div style="margin-bottom: 15px;">
+              ${statusBadge}
+            </div>
+            ${videoInfo}
+            ${actionButtons}
+          </div>
+        `;
+
+        return card;
+      }
+
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      async function init() {
+        try {
+          // Load contact data from GHL
+          const hasContactData = loadGHLContactData();
+          
+          if (!CONFIG.baseId) {
+            showMessage("⚠️ Missing Airtable Base ID. Please contact support.", "error");
+            document.getElementById("loading").style.display = "none";
+            return;
+          }
+
+          await loadWorkOrders();
+          
+          document.getElementById("loading").style.display = "none";
+          
+          if (workOrders.length === 0) {
+            showMessage("No work orders found", "info");
+          } else {
+            renderWorkOrders();
+            showMessage(`Loaded ${workOrders.length} work orders`, "success");
+          }
+        } catch (error) {
+          document.getElementById("loading").style.display = "none";
+          showMessage(`Error loading work orders: ${error.message}`, "error");
+        }
+      }
+
+      // ============================================
+      // START
+      // ============================================
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
