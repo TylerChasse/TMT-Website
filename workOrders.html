@@ -213,6 +213,72 @@
         font-size: 16px;
       }
 
+      .email-form {
+        text-align: center;
+        padding: 40px 20px;
+      }
+
+      .email-form-title {
+        font-size: 24px;
+        color: #2d3748;
+        margin-bottom: 10px;
+      }
+
+      .email-form-subtitle {
+        color: #718096;
+        font-size: 16px;
+        margin-bottom: 30px;
+      }
+
+      .email-input-group {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .email-input {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: border-color 0.2s ease;
+      }
+
+      .email-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+
+      .email-submit-btn {
+        width: 100%;
+        padding: 12px 20px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .email-submit-btn:hover {
+        background: #2563eb;
+      }
+
+      .email-submit-btn:disabled {
+        background: #cbd5e0;
+        cursor: not-allowed;
+      }
+
+      .error-message {
+        color: #e53e3e;
+        font-size: 14px;
+        margin-top: 10px;
+        text-align: center;
+      }
+
       /* Mobile responsiveness */
       @media (max-width: 768px) {
         body {
@@ -250,7 +316,23 @@
         <p class="subtitle">View and manage your content work orders</p>
       </div>
 
-      <div id="loading" class="loading">
+      <div id="emailForm" class="email-form" style="display: none;">
+        <div class="email-form-title">Welcome!</div>
+        <div class="email-form-subtitle">Please enter your email to access your work orders</div>
+        <div class="email-input-group">
+          <input 
+            type="email" 
+            id="emailInput" 
+            class="email-input" 
+            placeholder="your.email@example.com"
+            required
+          />
+          <button id="emailSubmitBtn" class="email-submit-btn">Continue</button>
+          <div id="errorMessage" class="error-message"></div>
+        </div>
+      </div>
+
+      <div id="loading" class="loading" style="display: none;">
         <div class="spinner"></div>
         <div>Loading your work orders...</div>
       </div>
@@ -263,6 +345,12 @@
       // CONFIGURATION - AUTO-LOADED FROM GHL
       // ============================================
       const CONFIG = {
+        // GHL API Configuration
+        ghlToken: "pit-fd5502b5-52ee-4ce8-9ead-bcd9b60d2baa", // Your GHL API token 
+        ghlLocation: "KIwSucPbrDt7LOEqHmB1", // Your GHL location ID 
+        ghlCustomFieldId: "SiEVh6Wk3pY3FiZN70Wn", // Custom field ID for airtable_id
+        
+        // Airtable Configuration
         airtableToken: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
         baseId: "", // Will be loaded from GHL contact data
         workOrdersTableName: "Work Orders", // Name of your Work Orders table
@@ -288,32 +376,74 @@
       // ============================================
       // LOAD GHL CONTACT DATA
       // ============================================
-      function loadGHLContactData() {
-        CONFIG.baseId = "appXteAFbB6ZwFuow";
-        
-        // Check if GHL injected contact data
-        if (window.ghlContactData) {
-          console.log("GHL Contact Data:", window.ghlContactData);
+      async function loadGHLContactData(userEmail) {
+        try {
+          console.log("Fetching contact data for email:", userEmail);
           
-          if (window.ghlContactData.airtableBaseId) {
-            CONFIG.baseId = window.ghlContactData.airtableBaseId;
-          } else {
+          // Search for contact by email using GHL API
+          const searchResponse = await fetch(
+            `https://services.leadconnectorhq.com/contacts/?locationId=${CONFIG.ghlLocation}&query=${encodeURIComponent(userEmail)}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${CONFIG.ghlToken}`,
+                Version: "2021-07-28",
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!searchResponse.ok) {
+            throw new Error(`Failed to search for contact: ${searchResponse.status}`);
           }
 
+          const searchData = await searchResponse.json();
+          
+          if (!searchData.contacts || searchData.contacts.length === 0) {
+            throw new Error("No contact found with that email address.");
+          }
+
+          const contact = searchData.contacts[0];
+          const contactId = contact.id;
+          console.log("Found contact ID:", contactId);
+
+          // Get full contact details including custom fields
+          const contactResponse = await fetch(
+            `https://services.leadconnectorhq.com/contacts/${contactId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${CONFIG.ghlToken}`,
+                Version: "2021-07-28",
+              },
+            }
+          );
+
+          if (!contactResponse.ok) {
+            throw new Error(`Failed to get contact details: ${contactResponse.status}`);
+          }
+
+          const contactData = await contactResponse.json();
+          console.log("Contact data:", contactData);
+
+          // Extract airtable_id from custom fields
+          const customFields = contactData.contact.customFields || [];
+          const airtableField = customFields.find(
+            field => field.id === CONFIG.ghlCustomFieldId
+          );
+
+          if (!airtableField || !airtableField.value) {
+            throw new Error("No Airtable Base ID found for this contact. Please contact support.");
+          }
+
+          CONFIG.baseId = airtableField.value;
+          console.log("Loaded Base ID from GHL:", CONFIG.baseId);
           return true;
-        } else {
+
+        } catch (error) {
+          console.error("Error loading contact data:", error);
+          throw error;
         }
-        
-        // Fallback: Check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const baseIdParam = urlParams.get('baseId') || urlParams.get('base_id');
-        
-        if (baseIdParam) {
-          CONFIG.baseId = baseIdParam;
-          return true;
-        } else {
-        }
-        return false;
       }
 
       // ============================================
@@ -466,27 +596,66 @@
       // INITIALIZATION
       // ============================================
       async function init() {
-        try {
-          // Load contact data from GHL
-          const hasContactData = loadGHLContactData();
+        // Show email form
+        document.getElementById("emailForm").style.display = "block";
+        
+        // Handle email form submission
+        const emailInput = document.getElementById("emailInput");
+        const submitBtn = document.getElementById("emailSubmitBtn");
+        const errorMessage = document.getElementById("errorMessage");
+        
+        const handleSubmit = async () => {
+          const email = emailInput.value.trim();
           
-          if (!CONFIG.baseId) {
-            document.getElementById("loading").style.display = "none";
+          if (!email) {
+            errorMessage.textContent = "Please enter your email address.";
             return;
           }
-
-          await loadWorkOrders();
           
-          document.getElementById("loading").style.display = "none";
-          
-          if (workOrders.length === 0) {
-            renderWorkOrders(); // This will show the empty state
-          } else {
-            renderWorkOrders();
+          // Basic email validation
+          if (!email.includes("@")) {
+            errorMessage.textContent = "Please enter a valid email address.";
+            return;
           }
-        } catch (error) {
-          document.getElementById("loading").style.display = "none";
-        }
+          
+          // Clear error and disable button
+          errorMessage.textContent = "";
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Loading...";
+          
+          try {
+            // Load contact data from GHL
+            await loadGHLContactData(email);
+            
+            // Hide email form, show loading
+            document.getElementById("emailForm").style.display = "none";
+            document.getElementById("loading").style.display = "block";
+            
+            // Load work orders
+            await loadWorkOrders();
+            
+            document.getElementById("loading").style.display = "none";
+            
+            if (workOrders.length === 0) {
+              renderWorkOrders(); // This will show the empty state
+            } else {
+              renderWorkOrders();
+            }
+          } catch (error) {
+            // Show error and re-enable form
+            errorMessage.textContent = error.message;
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Continue";
+          }
+        };
+        
+        // Add event listeners
+        submitBtn.addEventListener("click", handleSubmit);
+        emailInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            handleSubmit();
+          }
+        });
       }
 
       // ============================================
