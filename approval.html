@@ -368,7 +368,7 @@
       // ============================================
       // CONFIGURATION - UPDATE THESE VALUES
       // ============================================
-      const AIRTABLE_CONFIG = {
+      const CONFIG = {
         token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
         baseId: "", // Will be loaded from GHL contact data
         tableName: "",
@@ -410,11 +410,11 @@
         const tableNameParam = urlParams.get('tableName') || urlParams.get('table_name');
         
         if (baseIdParam) {
-          AIRTABLE_CONFIG.baseId = baseIdParam;
+          CONFIG.baseId = baseIdParam;
         }
         
         if (tableNameParam) {
-          AIRTABLE_CONFIG.tableName = decodeURIComponent(tableNameParam);
+          CONFIG.tableName = decodeURIComponent(tableNameParam);
         }
 
         return !!(baseIdParam && tableNameParam);
@@ -435,13 +435,13 @@
           // Load parameters from URL
           loadURLParameters();
           
-          if (!AIRTABLE_CONFIG.baseId) {
+          if (!CONFIG.baseId) {
             alert("⚠️ Missing Airtable Base ID. Please provide baseId in URL.");
             document.getElementById("loading").style.display = "none";
             return;
           }
 
-          if (!AIRTABLE_CONFIG.tableName) {
+          if (!CONFIG.tableName) {
             alert("⚠️ Missing Table Name. Please provide tableName in URL.");
             document.getElementById("loading").style.display = "none";
             return;
@@ -474,13 +474,13 @@
           // Fetch all records (handle pagination)
           do {
             let url = `https://api.airtable.com/v0/${
-              AIRTABLE_CONFIG.baseId
-            }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}?`;
+              CONFIG.baseId
+            }/${encodeURIComponent(CONFIG.tableName)}?`;
 
             // Add filter if specified
-            if (AIRTABLE_CONFIG.filterFormula) {
+            if (CONFIG.filterFormula) {
               url += `filterByFormula=${encodeURIComponent(
-                AIRTABLE_CONFIG.filterFormula
+                CONFIG.filterFormula
               )}&`;
             }
 
@@ -491,7 +491,7 @@
 
             const response = await fetch(url, {
               headers: {
-                Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+                Authorization: `Bearer ${CONFIG.token}`,
               },
             });
 
@@ -511,7 +511,7 @@
           mediaFiles = allRecords
             .map((record) => {
               const fields = record.fields;
-              const contentUrl = fields[AIRTABLE_CONFIG.fields.contentUrl];
+              const contentUrl = fields[CONFIG.fields.contentUrl];
 
               // Skip records without a content URL
               if (!contentUrl) {
@@ -532,7 +532,7 @@
 
               const fileId = `file_${record.id}`;
               const status = (
-                fields[AIRTABLE_CONFIG.fields.status] || "Pending"
+                fields[CONFIG.fields.status] || "Pending"
               ).toLowerCase();
 
               // Store approval state
@@ -546,11 +546,11 @@
                 airtableRecordId: record.id,
                 url: url,
                 type: type,
-                title: fields[AIRTABLE_CONFIG.fields.title] || fileName,
-                description: fields[AIRTABLE_CONFIG.fields.description] || "",
-                hashtags: fields[AIRTABLE_CONFIG.fields.hashtags] || "",
-                viralScore: fields[AIRTABLE_CONFIG.fields.viralScore] || null,
-                viralReason: fields[AIRTABLE_CONFIG.fields.viralReason] || "",
+                title: fields[CONFIG.fields.title] || fileName,
+                description: fields[CONFIG.fields.description] || "",
+                hashtags: fields[CONFIG.fields.hashtags] || "",
+                viralScore: fields[CONFIG.fields.viralScore] || null,
+                viralReason: fields[CONFIG.fields.viralReason] || "",
               };
             })
             .filter((file) => file !== null)
@@ -563,7 +563,7 @@
             });
 
           // Find Work Order record if workOrderName is specified
-          if (AIRTABLE_CONFIG.tableName) {
+          if (CONFIG.tableName) {
             await findWorkOrderRecord();
           }
         } catch (error) {
@@ -577,14 +577,14 @@
       async function findWorkOrderRecord() {
         try {
           const url = `https://api.airtable.com/v0/${
-            AIRTABLE_CONFIG.baseId
-          }/${encodeURIComponent(AIRTABLE_CONFIG.workOrdersTable.tableName)}?filterByFormula=${encodeURIComponent(
-            `{${AIRTABLE_CONFIG.workOrdersTable.nameField}} = '${AIRTABLE_CONFIG.tableName}'`
+            CONFIG.baseId
+          }/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}?filterByFormula=${encodeURIComponent(
+            `{${CONFIG.workOrdersTable.nameField}} = '${CONFIG.tableName}'`
           )}`;
 
           const response = await fetch(url, {
             headers: {
-              Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+              Authorization: `Bearer ${CONFIG.token}`,
             },
           });
 
@@ -792,7 +792,7 @@
               updates.push({
                 id: state.airtableRecordId,
                 fields: {
-                  [AIRTABLE_CONFIG.fields.status]: state.status,
+                  [CONFIG.fields.status]: state.status,
                 },
               });
             }
@@ -811,13 +811,13 @@
             const batch = updates.slice(i, i + batchSize);
 
             const url = `https://api.airtable.com/v0/${
-              AIRTABLE_CONFIG.baseId
-            }/${encodeURIComponent(AIRTABLE_CONFIG.tableName)}`;
+              CONFIG.baseId
+            }/${encodeURIComponent(CONFIG.tableName)}`;
             
             const response = await fetch(url, {
               method: "PATCH",
               headers: {
-                Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+                Authorization: `Bearer ${CONFIG.token}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ records: batch }),
@@ -850,7 +850,7 @@
       // ============================================
       async function triggerN8nWorkflow() {
         // Skip if n8n webhook is disabled
-        if (!AIRTABLE_CONFIG.n8nWebhook.enabled || !AIRTABLE_CONFIG.n8nWebhook.url) {
+        if (!CONFIG.n8nWebhook.enabled || !CONFIG.n8nWebhook.url) {
           return;
         }
 
@@ -866,7 +866,7 @@
 
           // Prepare payload for n8n
           const payload = {
-            workOrderName: AIRTABLE_CONFIG.tableName,
+            workOrderName: CONFIG.tableName,
             timestamp: new Date().toISOString(),
             totalApproved: approvedContent.length,
             approvedContent: approvedContent.map(file => ({
@@ -882,7 +882,7 @@
           };
 
           // Send to n8n webhook
-          const response = await fetch(AIRTABLE_CONFIG.n8nWebhook.url, {
+          const response = await fetch(CONFIG.n8nWebhook.url, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -912,13 +912,13 @@
 
           // Update the Work Order checkbox
           const url = `https://api.airtable.com/v0/${
-            AIRTABLE_CONFIG.baseId
-          }/${encodeURIComponent(AIRTABLE_CONFIG.workOrdersTable.tableName)}`;
+            CONFIG.baseId
+          }/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}`;
 
           const response = await fetch(url, {
             method: "PATCH",
             headers: {
-              Authorization: `Bearer ${AIRTABLE_CONFIG.token}`,
+              Authorization: `Bearer ${CONFIG.token}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -926,7 +926,7 @@
                 {
                   id: workOrderRecordId,
                   fields: {
-                    [AIRTABLE_CONFIG.workOrdersTable.approvedCheckboxField]: true,
+                    [CONFIG.workOrdersTable.approvedCheckboxField]: true,
                   },
                 },
               ],
