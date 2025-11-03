@@ -370,8 +370,10 @@
       // ============================================
       const CONFIG = {
         token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
-        baseId: "", // Will be loaded from GHL contact data
+        baseId: "", 
         tableName: "",
+        email: localStorage.getItem('email'),
+        ghlLocationId: localStorage.getItem('ghlLocationId'),
         
         // Field names in your Airtable (adjust if different)
         fields: {
@@ -394,7 +396,7 @@
         // n8n webhook configuration
         n8nWebhook: {
           enabled: true, // Set to false to disable n8n integration
-          url: "YOUR_N8N_WEBHOOK_URL", // e.g., "https://your-n8n-instance.com/webhook/approval"
+          url: "https://talentedmarketingtalents.app.n8n.cloud/webhook-test/intake/approvals",
         },
 
         // Optional: Filter records (leave empty to get all)
@@ -867,6 +869,9 @@
           // Prepare payload for n8n
           const payload = {
             workOrderName: CONFIG.tableName,
+            airtableId: CONFIG.baseId,
+            email: CONFIG.email,
+            ghlLocationId: CONFIG.ghlLocationId,
             timestamp: new Date().toISOString(),
             totalApproved: approvedContent.length,
             approvedContent: approvedContent.map(file => ({

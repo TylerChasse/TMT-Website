@@ -213,29 +213,29 @@
         font-size: 16px;
       }
 
-      .email-form {
+      .businessName-form {
         text-align: center;
         padding: 40px 20px;
       }
 
-      .email-form-title {
+      .businessName-form-title {
         font-size: 24px;
         color: #2d3748;
         margin-bottom: 10px;
       }
 
-      .email-form-subtitle {
+      .businessName-form-subtitle {
         color: #718096;
         font-size: 16px;
         margin-bottom: 30px;
       }
 
-      .email-input-group {
+      .businessName-input-group {
         max-width: 400px;
         margin: 0 auto;
       }
 
-      .email-input {
+      .businessName-input {
         width: 100%;
         padding: 12px 16px;
         font-size: 16px;
@@ -245,12 +245,12 @@
         transition: border-color 0.2s ease;
       }
 
-      .email-input:focus {
+      .businessName-input:focus {
         outline: none;
         border-color: #3b82f6;
       }
 
-      .email-submit-btn {
+      .businessName-submit-btn {
         width: 100%;
         padding: 12px 20px;
         background: #3b82f6;
@@ -263,11 +263,11 @@
         transition: background 0.2s ease;
       }
 
-      .email-submit-btn:hover {
+      .businessName-submit-btn:hover {
         background: #2563eb;
       }
 
-      .email-submit-btn:disabled {
+      .businessName-submit-btn:disabled {
         background: #cbd5e0;
         cursor: not-allowed;
       }
@@ -316,18 +316,18 @@
         <p class="subtitle">View and manage your content work orders</p>
       </div>
 
-      <div id="emailForm" class="email-form" style="display: none;">
-        <div class="email-form-title">Welcome!</div>
-        <div class="email-form-subtitle">Please enter your email to access your work orders</div>
-        <div class="email-input-group">
+      <div id="businessNameForm" class="businessName-form" style="display: none;">
+        <div class="businessName-form-title">Welcome!</div>
+        <div class="businessName-form-subtitle">Please enter your business name to access your work orders</div>
+        <div class="businessName-input-group">
           <input 
-            type="email" 
-            id="emailInput" 
-            class="email-input" 
-            placeholder="your.email@example.com"
+            type="businessName" 
+            id="businessNameInput" 
+            class="businessName-input" 
+            placeholder="Your Business Name"
             required
           />
-          <button id="emailSubmitBtn" class="email-submit-btn">Continue</button>
+          <button id="businessNameSubmitBtn" class="businessName-submit-btn">Continue</button>
           <div id="errorMessage" class="error-message"></div>
         </div>
       </div>
@@ -344,16 +344,13 @@
       // ============================================
       // CONFIGURATION - AUTO-LOADED FROM GHL
       // ============================================
-      const CONFIG = {
-        // GHL API Configuration
-        ghlToken: "pit-fd5502b5-52ee-4ce8-9ead-bcd9b60d2baa", // Your GHL API token 
-        ghlLocation: "KIwSucPbrDt7LOEqHmB1", // Your GHL location ID 
-        ghlCustomFieldId: "SiEVh6Wk3pY3FiZN70Wn", // Custom field ID for airtable_id
-        
+      const CONFIG = {        
         // Airtable Configuration
         airtableToken: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
-        baseId: "", // Will be loaded from GHL contact data
+        businessName: "", // Will be set from user input
         workOrdersTableName: "Work Orders", // Name of your Work Orders table
+        email: "", // Will be fetched from Airtable
+        ghlLocationId: "", // Will be fetched from Airtable
         
         // Field names in your Work Orders table
         fields: {
@@ -361,6 +358,8 @@
           input_video_url: "input_video_url",
           status: "status",
           approved: "approved", // Checkbox field
+          email: "email", // email field to link to GHL contact
+          ghl_location_id: "ghl_location_id", 
         },
       
         // Approval page URL template (use tableName parameter)
@@ -374,74 +373,47 @@
       let workOrders = [];
 
       // ============================================
-      // LOAD GHL CONTACT DATA
+      // GET AIRTABLE BASE ID BY BUSINESS NAME 
       // ============================================
-      async function loadGHLContactData(userEmail) {
+      async function getBaseIdByName() {
         try {
-          console.log("Fetching contact data for email:", userEmail);
+          console.log(`Searching for base: "${CONFIG.businessName}"`);
           
-          // Search for contact by email using GHL API
-          const searchResponse = await fetch(
-            `https://services.leadconnectorhq.com/contacts/?locationId=${CONFIG.ghlLocation}&query=${encodeURIComponent(userEmail)}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${CONFIG.ghlToken}`,
-                Version: "2021-07-28",
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          const response = await fetch('https://api.airtable.com/v0/meta/bases', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${CONFIG.airtableToken}`,
+            },
+          });
 
-          if (!searchResponse.ok) {
-            throw new Error(`Failed to search for contact: ${searchResponse.status}`);
+          if (!response.ok) {
+            throw new Error(`Airtable API error: ${response.status} - ${response.statusText}`);
           }
 
-          const searchData = await searchResponse.json();
+          const data = await response.json();
           
-          if (!searchData.contacts || searchData.contacts.length === 0) {
-            throw new Error("No contact found with that email address.");
+          if (!data.bases || data.bases.length === 0) {
+            console.log('No bases found');
+            return null;
           }
 
-          const contact = searchData.contacts[0];
-          const contactId = contact.id;
-          console.log("Found contact ID:", contactId);
-
-          // Get full contact details including custom fields
-          const contactResponse = await fetch(
-            `https://services.leadconnectorhq.com/contacts/${contactId}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${CONFIG.ghlToken}`,
-                Version: "2021-07-28",
-              },
-            }
+          // Find the base with matching name
+          const matchingBase = data.bases.find(
+            base => base.name === CONFIG.businessName
           );
 
-          if (!contactResponse.ok) {
-            throw new Error(`Failed to get contact details: ${contactResponse.status}`);
+          if (matchingBase) {
+            console.log(`✅ Found base: "${matchingBase.name}" with ID: ${matchingBase.id}`);
+            CONFIG.baseId = matchingBase.id;
+            return;
+          } else {
+            console.log(`❌ No base found with name: "${baseName}"`);
+            console.log('Available bases:', data.bases.map(b => b.name));
+            return;
           }
-
-          const contactData = await contactResponse.json();
-          console.log("Contact data:", contactData);
-
-          // Extract airtable_id from custom fields
-          const customFields = contactData.contact.customFields || [];
-          const airtableField = customFields.find(
-            field => field.id === CONFIG.ghlCustomFieldId
-          );
-
-          if (!airtableField || !airtableField.value) {
-            throw new Error("No Airtable Base ID found for this contact. Please contact support.");
-          }
-
-          CONFIG.baseId = airtableField.value;
-          console.log("Loaded Base ID from GHL:", CONFIG.baseId);
-          return true;
 
         } catch (error) {
-          console.error("Error loading contact data:", error);
+          console.error('Error fetching bases:', error);
           throw error;
         }
       }
@@ -494,6 +466,8 @@
               status: fields[CONFIG.fields.status] || "",
               approved: fields[CONFIG.fields.approved] || false,
               createdTime: record.createdTime, // Use Airtable's auto-generated created time
+              email: fields[CONFIG.fields.email] || "",
+              ghlLocationId: fields[CONFIG.fields.ghl_location_id] || "",
               // Store all fields for additional data
               allFields: fields,
             };
@@ -549,6 +523,10 @@
           statusBadge = '<span class="status-badge status-pending">⏳ Pending</span>';
         }
 
+        // Set information needed for media approval page
+        localStorage.setItem("email", workOrder.email);
+        localStorage.setItem("ghlLocationId", workOrder.ghlLocationId);
+
         // Build approval page URL - pass work order name as tableName
         const approvalUrl = CONFIG.approvalPageUrl.replace(
           "{workOrderName}",
@@ -596,40 +574,40 @@
       // INITIALIZATION
       // ============================================
       async function init() {
-        // Show email form
-        document.getElementById("emailForm").style.display = "block";
+        // Show businessName form
+        document.getElementById("businessNameForm").style.display = "block";
         
-        // Handle email form submission
-        const emailInput = document.getElementById("emailInput");
-        const submitBtn = document.getElementById("emailSubmitBtn");
+        // Handle businessName form submission
+        const businessNameInput = document.getElementById("businessNameInput");
+        const submitBtn = document.getElementById("businessNameSubmitBtn");
         const errorMessage = document.getElementById("errorMessage");
         
         const handleSubmit = async () => {
-          const email = emailInput.value.trim();
+          const businessName = businessNameInput.value.trim();
           
-          if (!email) {
-            errorMessage.textContent = "Please enter your email address.";
+          if (!businessName) {
+            errorMessage.textContent = "Please enter your business name.";
             return;
           }
-          
-          // Basic email validation
-          if (!email.includes("@")) {
-            errorMessage.textContent = "Please enter a valid email address.";
-            return;
-          }
+
+          CONFIG.businessName = businessName;
           
           // Clear error and disable button
           errorMessage.textContent = "";
           submitBtn.disabled = true;
           submitBtn.textContent = "Loading...";
           
-          try {
-            // Load contact data from GHL
-            await loadGHLContactData(email);
-            
-            // Hide email form, show loading
-            document.getElementById("emailForm").style.display = "none";
+          try {            
+            // Hide businessName form, show loading
+            document.getElementById("businessNameForm").style.display = "none";
             document.getElementById("loading").style.display = "block";
+
+            // Get base ID by business name
+            await getBaseIdByName();
+
+            // Store information for media approval page
+            localStorage.setItem("baseId", CONFIG.baseId);
+            localStorage.setItem("businessName", CONFIG.businessName);
             
             // Load work orders
             await loadWorkOrders();
@@ -651,7 +629,7 @@
         
         // Add event listeners
         submitBtn.addEventListener("click", handleSubmit);
-        emailInput.addEventListener("keypress", (e) => {
+        businessNameInput.addEventListener("keypress", (e) => {
           if (e.key === "Enter") {
             handleSubmit();
           }
