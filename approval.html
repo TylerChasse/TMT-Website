@@ -369,7 +369,7 @@
       // CONFIGURATION - UPDATE THESE VALUES
       // ============================================
       const CONFIG = {
-        token: "patDOZjuXZpa3ZySv.bab6c7187a0bda4c6579c9cfbd11aeb1d6d2f8556efb48300e44b24b9d9641d3", // Your Personal Access Token
+        token: "patDOZjuXZpa3ZySv.49fa36d882b45f51832e870a66e47c8d26771e340488fd966a59dc369a052cea", // Your Personal Access Token
         baseId: "", 
         tableName: "",
         email: localStorage.getItem('email'),
@@ -384,6 +384,7 @@
           hashtags: "hashtags", // Optional
           viralScore: "viral_score", // Optional
           viralReason: "viral_reason", // Optional
+          socialMediaPlatforms: "social_media_platforms", // Optional
         },
 
         // Work Orders table configuration
@@ -553,6 +554,7 @@
                 hashtags: fields[CONFIG.fields.hashtags] || "",
                 viralScore: fields[CONFIG.fields.viralScore] || null,
                 viralReason: fields[CONFIG.fields.viralReason] || "",
+                socialMediaPlatforms: fields[CONFIG.fields.socialMediaPlatforms] || "",
               };
             })
             .filter((file) => file !== null)
@@ -883,6 +885,7 @@
               hashtags: file.hashtags,
               viralScore: file.viralScore,
               viralReason: file.viralReason,
+              socialMediaPlatforms: file.socialMediaPlatforms,
             })),
           };
 
