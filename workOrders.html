@@ -145,6 +145,15 @@
         background: #2563eb;
       }
 
+      .btn-secondary {
+        background: #6b7280;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #4b5563;
+      }
+
       .video-info {
         margin-top: 10px;
         padding: 10px;
@@ -523,7 +532,7 @@
           statusBadge = '<span class="status-badge status-pending">⏳ Pending</span>';
         }
 
-        // Set information needed for media approval page
+        // Set information needed for content approval page
         localStorage.setItem("email", workOrder.email);
         localStorage.setItem("ghlLocationId", workOrder.ghlLocationId);
 
@@ -543,16 +552,23 @@
              </div>`
           : '';
 
-        // Show Approve button only for "Awaiting Review" status
-        const showApproveButton = workOrder.status === 'Awaiting Review';
-        
-        const actionButtons = showApproveButton
-          ? `<div class="work-order-actions">
+        // Show appropriate button based on status and approval state
+        let actionButtons = '';
+        if (workOrder.status === 'Awaiting Review') {
+          // Show Approve button for work orders awaiting review
+          actionButtons = `<div class="work-order-actions">
                <a href="${approvalUrl}" class="btn btn-primary">
-                 ✓ Approve Media
+                 ✓ Approve Content
                </a>
-             </div>`
-          : '';
+             </div>`;
+        } else if (workOrder.approved) {
+          // Show View button for approved work orders
+          actionButtons = `<div class="work-order-actions">
+               <a href="${approvalUrl}" class="btn btn-secondary">
+                 View Content
+               </a>
+             </div>`;
+        }
 
         card.innerHTML = `
           <div class="work-order-content">
@@ -605,7 +621,7 @@
             // Get base ID by business name
             await getBaseIdByName();
 
-            // Store information for media approval page
+            // Store information for content approval page
             localStorage.setItem("baseId", CONFIG.baseId);
             localStorage.setItem("businessName", CONFIG.businessName);
             
