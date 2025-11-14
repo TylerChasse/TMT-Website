@@ -833,14 +833,14 @@
         // Replace approval page with work orders page
         if (currentUrl.includes('/approval') || currentUrl.includes('content-approval')) {
           const baseUrl = currentUrl.split(/\/(approval|content-approval)/)[0];
-          return `${baseUrl}/work-orders-dashboard.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
+          return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
         }
         
         // Construct from base URL
         const origin = window.location.origin;
         const pathname = window.location.pathname;
         const baseUrl = origin + pathname.substring(0, pathname.lastIndexOf('/'));
-        return `${baseUrl}/work-orders-dashboard.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
+        return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
       }
 
       // ============================================
