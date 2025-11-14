@@ -178,36 +178,22 @@
         z-index: 1001;
       }
 
-      .content-description {
+      .view-details-btn {
+        width: 100%;
+        padding: 10px;
+        background: #878e9c;
+        color: white;
+        border: none;
+        border-radius: 6px;
         font-size: 13px;
-        color: #666;
-        margin-bottom: 10px;
-        line-height: 1.5;
-        max-height: 60px;
-        overflow: hidden;
-      }
-
-      .content-hashtags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease;
         margin-bottom: 10px;
       }
 
-      .hashtag {
-        background: #e3f2fd;
-        color: #1976d2;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 500;
-      }
-
-      .content-name {
-        font-size: 12px;
-        color: #999;
-        margin-bottom: 5px;
-        font-family: "Courier New", monospace;
+      .view-details-btn:hover {
+        background: #4b5563;
       }
 
       .approval-section {
@@ -297,6 +283,168 @@
         color: #666;
       }
 
+      /* Modal Styles */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9998;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+        position: relative;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        padding: 20px 25px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+      }
+
+      .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .modal-close {
+        background: #f5f5f5;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 20px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .modal-close:hover {
+        background: #e0e0e0;
+        color: #333;
+      }
+
+      .modal-body {
+        padding: 25px;
+      }
+
+      .modal-media-preview {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        background: #000;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .modal-media-preview.image {
+        object-fit: cover;
+        background: #f5f5f5;
+      }
+
+      .modal-info-section {
+        margin-bottom: 20px;
+      }
+
+      .modal-info-label {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .modal-info-content {
+        font-size: 15px;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      .modal-hashtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .modal-hashtag {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .modal-viral-info {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #ff9800;
+      }
+
+      .modal-viral-score {
+        font-size: 24px;
+        font-weight: 700;
+        color: #ff9800;
+        margin-bottom: 8px;
+      }
+
+      .modal-viral-reason {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.5;
+      }
+
       /* Mobile responsiveness */
       @media (max-width: 768px) {
         .content-grid {
@@ -321,6 +469,15 @@
         .viral-score-badge:hover::before {
           right: auto;
           left: 20px;
+        }
+
+        .modal-content {
+          max-height: 95vh;
+          margin: 10px;
+        }
+
+        .modal-body {
+          padding: 15px;
         }
       }
     </style>
@@ -351,16 +508,29 @@
         </div>
       </div>
 
-      <div id="loading" class="loading">Loading content from Airtable...</div>
+      <div id="loading" class="loading">Loading content...</div>
       <div id="contentGrid" class="content-grid"></div>
 
       <div id="actionButtons" class="action-buttons">
-        <button class="button secondary" onclick="approveAllcontent()">
+        <button class="button secondary" onclick="approveAllContent()">
           ✓ Approve All
         </button>
         <button class="button" id="submitButton" onclick="syncToAirtable()">
           📤 Submit Approvals
         </button>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle">Content Details</div>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Content will be dynamically inserted here -->
+        </div>
       </div>
     </div>
 
@@ -384,7 +554,7 @@
           hashtags: "hashtags", // Optional
           viralScore: "viral_score", // Optional
           viralReason: "viral_reason", // Optional
-          socialcontentPlatforms: "social_content_platforms", // Optional
+          socialContentPlatforms: "social_content_platforms", // Optional
         },
 
         // Work Orders table configuration
@@ -433,6 +603,114 @@
       let isReadOnlyMode = false; // Track if we're in read-only mode
 
       // ============================================
+      // MODAL FUNCTIONS
+      // ============================================
+      function openModal(fileId) {
+        const file = contentFiles.find(f => f.id === fileId);
+        if (!file) return;
+
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+
+        // Set title
+        modalTitle.textContent = file.title || 'Content Details';
+
+        // Build modal content
+        let mediaHTML = '';
+        if (file.type === 'video') {
+          mediaHTML = `<video src="${file.url}" class="modal-media-preview" controls autoplay></video>`;
+        } else if (file.type === 'image') {
+          mediaHTML = `<img src="${file.url}" class="modal-media-preview image" alt="${file.title}">`;
+        }
+
+        // Viral score section
+        let viralSection = '';
+        if (file.viralScore !== null && file.viralScore !== undefined) {
+          const scoreLevel = getViralScoreLevel(file.viralScore);
+          const scoreLevelText = scoreLevel === 'high' ? 'High' : scoreLevel === 'medium' ? 'Medium' : 'Low';
+          viralSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Viral Score</div>
+              <div class="modal-viral-info">
+                <div class="modal-viral-score">${file.viralScore}/10 - ${scoreLevelText} Virality</div>
+                <div class="modal-viral-reason">${file.viralReason || 'No reason provided'}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Description section
+        let descriptionSection = '';
+        if (file.description) {
+          descriptionSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Description</div>
+              <div class="modal-info-content">${file.description}</div>
+            </div>
+          `;
+        }
+
+        // Hashtags section
+        let hashtagsSection = '';
+        if (file.hashtags) {
+          const hashtags = file.hashtags
+            .split(/[,\s]+/)
+            .filter(h => h)
+            .map(tag => {
+              const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
+              return `<span class="modal-hashtag">${cleanTag}</span>`;
+            })
+            .join('');
+          
+          hashtagsSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Hashtags</div>
+              <div class="modal-hashtags">${hashtags}</div>
+            </div>
+          `;
+        }
+
+        // Social platforms section
+        let platformsSection = '';
+        if (file.socialContentPlatforms) {
+          platformsSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Social Media Platforms</div>
+              <div class="modal-info-content">${file.socialContentPlatforms}</div>
+            </div>
+          `;
+        }
+
+        modalBody.innerHTML = `
+          ${mediaHTML}
+          ${viralSection}
+          ${descriptionSection}
+          ${hashtagsSection}
+          ${platformsSection}
+        `;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal(event) {
+        // Only close if clicking overlay or close button, not the content
+        if (event && event.target.className !== 'modal-overlay') return;
+        
+        const modal = document.getElementById('modalOverlay');
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+
+      // Close modal on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // ============================================
       // INITIALIZATION
       // ============================================
       async function init() {
@@ -459,13 +737,12 @@
           if (contentFiles.length === 0) {
             document.getElementById("contentGrid").innerHTML = '<div class="loading">No content records found</div>';
           } else {
-            rendercontentGrid();
+            renderContentGrid();
             updateStats();
           }
 
           // Show/hide UI elements based on read-only mode
           if (isReadOnlyMode) {
-            
             // Hide action buttons
             document.getElementById("actionButtons").style.display = "none";
             
@@ -567,7 +844,7 @@
                 hashtags: fields[CONFIG.fields.hashtags] || "",
                 viralScore: fields[CONFIG.fields.viralScore] || null,
                 viralReason: fields[CONFIG.fields.viralReason] || "",
-                socialcontentPlatforms: fields[CONFIG.fields.socialcontentPlatforms] || "",
+                socialContentPlatforms: fields[CONFIG.fields.socialContentPlatforms] || "",
               };
             })
             .filter((file) => file !== null)
@@ -631,9 +908,9 @@
       }
 
       // ============================================
-      // RENDER content GRID
+      // RENDER CONTENT GRID
       // ============================================
-      function rendercontentGrid() {
+      function renderContentGrid() {
         const grid = document.getElementById("contentGrid");
 
         if (contentFiles.length === 0) {
@@ -644,7 +921,7 @@
         grid.innerHTML = "";
 
         contentFiles.forEach((file) => {
-          const card = createcontentCard(file);
+          const card = createContentCard(file);
           grid.appendChild(card);
         });
       }
@@ -663,9 +940,9 @@
       }
 
       // ============================================
-      // CREATE content CARD
+      // CREATE CONTENT CARD
       // ============================================
-      function createcontentCard(file) {
+      function createContentCard(file) {
         const card = document.createElement("div");
         card.className = "content-card";
         card.id = `card-${file.id}`;
@@ -677,7 +954,7 @@
           card.classList.add("denied");
         }
 
-        // content preview
+        // Content preview
         let contentHTML = "";
         if (file.type === "video") {
           contentHTML = `<video src="${file.url}" class="content-preview video" controls></video>`;
@@ -702,18 +979,6 @@
           `;
         }
 
-        // Parse hashtags
-        const hashtags = file.hashtags
-          ? file.hashtags
-              .split(/[,\s]+/)
-              .filter((h) => h)
-              .map((tag) => {
-                const cleanTag = tag.startsWith("#") ? tag : `#${tag}`;
-                return `<span class="hashtag">${cleanTag}</span>`;
-              })
-              .join("")
-          : "";
-
         card.innerHTML = `
                 ${contentHTML}
                 <div class="content-info">
@@ -725,16 +990,9 @@
                         }
                         ${viralScoreBadge}
                     </div>
-                    ${
-                      file.description
-                        ? `<div class="content-description">${file.description}</div>`
-                        : ""
-                    }
-                    ${
-                      hashtags
-                        ? `<div class="content-hashtags">${hashtags}</div>`
-                        : ""
-                    }
+                    <button class="view-details-btn" onclick="openModal('${file.id}')">
+                      View Details
+                    </button>
                     <div class="approval-section">
                         <div class="status-selector">
                             <button class="status-button ${
@@ -967,7 +1225,7 @@
               hashtags: file.hashtags,
               viralScore: file.viralScore,
               viralReason: file.viralReason,
-              socialcontentPlatforms: file.socialcontentPlatforms,
+              socialContentPlatforms: file.socialContentPlatforms,
             })),
           };
 
@@ -1038,7 +1296,7 @@
       // ============================================
       // BATCH ACTIONS
       // ============================================
-      function approveAllcontent() {
+      function approveAllContent() {
         // Prevent changes in read-only mode
         if (isReadOnlyMode) {
           alert("⚠️ This work order is already approved. You cannot make changes in read-only mode.");
