@@ -551,7 +551,7 @@
           status: "status", // Required: approval status (single select field)
           title: "title", // Optional
           description: "description", // Optional
-          hashtags: "hashtags", // Optional
+          relevant_hashtags: "relevant_hashtags", // Optional
           viralScore: "viral_score", // Optional
           viralReason: "viral_reason", // Optional
           socialContentPlatforms: "social_content_platforms", // Optional
@@ -653,8 +653,9 @@
 
         // Hashtags section
         let hashtagsSection = '';
-        if (file.hashtags) {
-          const hashtags = file.hashtags
+        console.log('File hashtags:', file.relevant_hashtags);
+        if (file.relevant_hashtags) {
+          const hashtags = file.relevant_hashtags
             .split(/[,\s]+/)
             .filter(h => h)
             .map(tag => {
@@ -841,7 +842,7 @@
                 type: type,
                 title: fields[CONFIG.fields.title] || fileName,
                 description: fields[CONFIG.fields.description] || "",
-                hashtags: fields[CONFIG.fields.hashtags] || "",
+                relevant_hashtags: fields[CONFIG.fields.relevant_hashtags] || "",
                 viralScore: fields[CONFIG.fields.viralScore] || null,
                 viralReason: fields[CONFIG.fields.viralReason] || "",
                 socialContentPlatforms: fields[CONFIG.fields.socialContentPlatforms] || "",
@@ -1222,7 +1223,7 @@
               description: file.description,
               url: file.url,
               type: file.type,
-              hashtags: file.hashtags,
+              relevant_hashtags: file.relevant_hashtags,
               viralScore: file.viralScore,
               viralReason: file.viralReason,
               socialContentPlatforms: file.socialContentPlatforms,
