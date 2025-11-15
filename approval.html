@@ -554,7 +554,7 @@
           relevant_hashtags: "relevant_hashtags", // Optional
           viralScore: "viral_score", // Optional
           viralReason: "viral_reason", // Optional
-          socialContentPlatforms: "social_content_platforms", // Optional
+          socialMediaPlatforms: "social_media_platforms", // Optional
         },
 
         // Work Orders table configuration
@@ -674,11 +674,11 @@
 
         // Social platforms section
         let platformsSection = '';
-        if (file.socialContentPlatforms) {
+        if (file.socialMediaPlatforms) {
           platformsSection = `
             <div class="modal-info-section">
               <div class="modal-info-label">Social Media Platforms</div>
-              <div class="modal-info-content">${file.socialContentPlatforms}</div>
+              <div class="modal-info-content">${file.socialMediaPlatforms}</div>
             </div>
           `;
         }
@@ -845,7 +845,7 @@
                 relevant_hashtags: fields[CONFIG.fields.relevant_hashtags] || "",
                 viralScore: fields[CONFIG.fields.viralScore] || null,
                 viralReason: fields[CONFIG.fields.viralReason] || "",
-                socialContentPlatforms: fields[CONFIG.fields.socialContentPlatforms] || "",
+                socialMediaPlatforms: fields[CONFIG.fields.socialMediaPlatforms] || "",
               };
             })
             .filter((file) => file !== null)
@@ -1226,7 +1226,7 @@
               relevant_hashtags: file.relevant_hashtags,
               viralScore: file.viralScore,
               viralReason: file.viralReason,
-              socialContentPlatforms: file.socialContentPlatforms,
+              socialMediaPlatforms: file.socialMediaPlatforms,
             })),
           };
 
