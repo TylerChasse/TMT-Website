@@ -547,14 +547,15 @@
         
         // Field names in your Airtable (adjust if different)
         fields: {
-          contentUrl: "content_url", // Required: URL to content file
-          status: "status", // Required: approval status (single select field)
-          title: "title", // Optional
-          description: "description", // Optional
-          relevant_hashtags: "relevant_hashtags", // Optional
-          viralScore: "viral_score", // Optional
-          viralReason: "viral_reason", // Optional
-          socialMediaPlatforms: "social_media_platforms", // Optional
+          contentId: "id",
+          contentUrl: "content_url", 
+          status: "status", 
+          title: "title", 
+          description: "description", 
+          relevant_hashtags: "relevant_hashtags", 
+          viralScore: "viral_score", 
+          viralReason: "viral_reason", 
+          socialMediaPlatforms: "social_media_platforms", 
         },
 
         // Work Orders table configuration
@@ -672,23 +673,11 @@
           `;
         }
 
-        // Social platforms section
-        let platformsSection = '';
-        if (file.socialMediaPlatforms) {
-          platformsSection = `
-            <div class="modal-info-section">
-              <div class="modal-info-label">Social Media Platforms</div>
-              <div class="modal-info-content">${file.socialMediaPlatforms}</div>
-            </div>
-          `;
-        }
-
         modalBody.innerHTML = `
           ${mediaHTML}
           ${viralSection}
           ${descriptionSection}
           ${hashtagsSection}
-          ${platformsSection}
         `;
 
         modal.classList.add('active');
@@ -838,6 +827,7 @@
               return {
                 id: fileId,
                 airtableRecordId: record.id,
+                contentId: fields[CONFIG.fields.contentId] || "",
                 url: url,
                 type: type,
                 title: fields[CONFIG.fields.title] || fileName,
@@ -1219,6 +1209,7 @@
             totalApproved: approvedContent.length,
             approvedContent: approvedContent.map(file => ({
               id: file.airtableRecordId,
+              contentId: file.contentId,
               title: file.title,
               description: file.description,
               url: file.url,
