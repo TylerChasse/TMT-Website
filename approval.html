@@ -32,6 +32,7 @@
         color: #333;
       }
 
+      /* Statistics Display */
       .stats {
         display: flex;
         gap: 20px;
@@ -61,6 +62,7 @@
         margin-top: 5px;
       }
 
+      /* Content Grid Layout */
       .content-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -68,6 +70,7 @@
         margin-top: 30px;
       }
 
+      /* Content Card Styles */
       .content-card {
         border: 2px solid #e0e0e0;
         border-radius: 8px;
@@ -86,6 +89,7 @@
         box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
       }
 
+      /* Media Preview Styles */
       .content-preview {
         width: 100%;
         height: 200px;
@@ -99,6 +103,7 @@
         background: #000;
       }
 
+      /* Card Content Info */
       .content-info {
         padding: 15px;
       }
@@ -118,6 +123,7 @@
         flex: 1;
       }
 
+      /* Viral Score Badge */
       .viral-score-badge {
         display: flex;
         align-items: center;
@@ -147,6 +153,7 @@
         color: white;
       }
 
+      /* Viral Score Tooltip */
       .viral-score-badge:hover::after {
         content: attr(data-reason);
         position: absolute;
@@ -178,6 +185,7 @@
         z-index: 1001;
       }
 
+      /* View Details Button */
       .view-details-btn {
         width: 100%;
         padding: 10px;
@@ -196,6 +204,7 @@
         background: #4b5563;
       }
 
+      /* Approval Section */
       .approval-section {
         padding-top: 10px;
         border-top: 1px solid #f0f0f0;
@@ -207,6 +216,7 @@
         margin-bottom: 10px;
       }
 
+      /* Status Buttons */
       .status-button {
         flex: 1;
         padding: 8px;
@@ -241,6 +251,7 @@
         border-color: #f44336;
       }
 
+      /* Action Buttons */
       .action-buttons {
         display: flex;
         gap: 10px;
@@ -277,13 +288,14 @@
         cursor: not-allowed;
       }
 
+      /* Loading State */
       .loading {
         text-align: center;
         padding: 40px;
         color: #666;
       }
 
-      /* Modal Styles */
+      /* Modal Overlay */
       .modal-overlay {
         display: none;
         position: fixed;
@@ -312,6 +324,7 @@
         }
       }
 
+      /* Modal Content Container */
       .modal-content {
         background: white;
         border-radius: 12px;
@@ -335,6 +348,7 @@
         }
       }
 
+      /* Modal Header */
       .modal-header {
         padding: 20px 25px;
         border-bottom: 2px solid #f0f0f0;
@@ -373,6 +387,7 @@
         color: #333;
       }
 
+      /* Modal Body */
       .modal-body {
         padding: 25px;
       }
@@ -391,6 +406,7 @@
         background: #f5f5f5;
       }
 
+      /* Modal Info Sections */
       .modal-info-section {
         margin-bottom: 20px;
       }
@@ -410,6 +426,7 @@
         line-height: 1.6;
       }
 
+      /* Modal Hashtags */
       .modal-hashtags {
         display: flex;
         flex-wrap: wrap;
@@ -425,6 +442,7 @@
         font-weight: 500;
       }
 
+      /* Modal Viral Info */
       .modal-viral-info {
         background: #f9f9f9;
         padding: 15px;
@@ -445,7 +463,7 @@
         line-height: 1.5;
       }
 
-      /* Mobile responsiveness */
+      /* Mobile Responsiveness */
       @media (max-width: 768px) {
         .content-grid {
           grid-template-columns: 1fr;
@@ -489,6 +507,7 @@
         Review and approve content
       </p>
 
+      <!-- Statistics Dashboard -->
       <div class="stats">
         <div class="stat-item">
           <span class="stat-label">Total content</span>
@@ -508,9 +527,13 @@
         </div>
       </div>
 
+      <!-- Loading State -->
       <div id="loading" class="loading">Loading content...</div>
+      
+      <!-- Content Grid Container -->
       <div id="contentGrid" class="content-grid"></div>
 
+      <!-- Bulk Action Buttons -->
       <div id="actionButtons" class="action-buttons">
         <button class="button secondary" onclick="approveAllContent()">
           ✓ Approve All
@@ -521,7 +544,7 @@
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Details Modal -->
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
       <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
@@ -536,16 +559,19 @@
 
     <script>
       // ============================================
-      // CONFIGURATION - UPDATE THESE VALUES
+      // CONFIGURATION
       // ============================================
       const CONFIG = {
-        token: "patDOZjuXZpa3ZySv.49fa36d882b45f51832e870a66e47c8d26771e340488fd966a59dc369a052cea", // Your Personal Access Token
+        // Airtable Authentication
+        token: "patDOZjuXZpa3ZySv.49fa36d882b45f51832e870a66e47c8d26771e340488fd966a59dc369a052cea",
         baseId: "", 
         tableName: "",
+        
+        // User Context (from localStorage)
         email: localStorage.getItem('email'),
         ghlLocationId: localStorage.getItem('ghlLocationId'),
         
-        // Field names in your Airtable (adjust if different)
+        // Airtable Field Mappings
         fields: {
           contentId: "id",
           contentUrl: "content_url", 
@@ -558,26 +584,36 @@
           socialMediaPlatforms: "social_media_platforms", 
         },
 
-        // Work Orders table configuration
+        // Work Orders Table Configuration
         workOrdersTable: {
-          tableName: "Work Orders", // Name of the Work Orders table
-          nameField: "name", // Field that contains "Work Order date time"
-          approvedCheckboxField: "approved", // Checkbox field to update
+          tableName: "Work Orders", 
+          nameField: "name",
+          approvedCheckboxField: "approved", 
         },
 
-        // n8n webhook configuration
+        // n8n Webhook Configuration
         n8nWebhook: {
-          enabled: true, // Set to false to disable n8n integration
+          enabled: true,
           url: "https://talentedmarketingtalents.app.n8n.cloud/webhook/intake/approvals",
         },
-
-        // Optional: Filter records (leave empty to get all)
-        filterFormula: "", // e.g., "AND({status} = 'Pending', {type} = 'Video')"
       };
 
       // ============================================
-      // LOAD URL PARAMETERS
+      // STATE MANAGEMENT
       // ============================================
+      let contentMedia = []; // Array of all content media items
+      let approvalStates = {}; // Maps mediaId to { status, airtableRecordId }
+      let workOrderRecordId = null; // ID of the Work Order record in Airtable
+      let isWorkOrderApproved = false; // Whether work order is already approved
+      let isReadOnlyMode = false; // Whether page is in read-only mode
+
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      
+      /**
+       * Load URL parameters (baseId and tableName) from query string
+       */
       function loadURLParameters() {
         const urlParams = new URLSearchParams(window.location.search);
         const baseIdParam = urlParams.get('baseId') || urlParams.get('base_id');
@@ -594,120 +630,15 @@
         return !!(baseIdParam && tableNameParam);
       }
 
-      // ============================================
-      // STATE MANAGEMENT
-      // ============================================
-      let contentFiles = [];
-      let approvalStates = {}; // { fileId: { status, airtableRecordId } }
-      let workOrderRecordId = null; // Store the Work Order record ID
-      let isWorkOrderApproved = false; // Track if work order is already approved
-      let isReadOnlyMode = false; // Track if we're in read-only mode
-
-      // ============================================
-      // MODAL FUNCTIONS
-      // ============================================
-      function openModal(fileId) {
-        const file = contentFiles.find(f => f.id === fileId);
-        if (!file) return;
-
-        const modal = document.getElementById('modalOverlay');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-
-        // Set title
-        modalTitle.textContent = file.title || 'Content Details';
-
-        // Build modal content
-        let mediaHTML = '';
-        if (file.type === 'video') {
-          mediaHTML = `<video src="${file.url}" class="modal-media-preview" controls autoplay></video>`;
-        } else if (file.type === 'image') {
-          mediaHTML = `<img src="${file.url}" class="modal-media-preview image" alt="${file.title}">`;
-        }
-
-        // Viral score section
-        let viralSection = '';
-        if (file.viralScore !== null && file.viralScore !== undefined) {
-          const scoreLevel = getViralScoreLevel(file.viralScore);
-          const scoreLevelText = scoreLevel === 'high' ? 'High' : scoreLevel === 'medium' ? 'Medium' : 'Low';
-          viralSection = `
-            <div class="modal-info-section">
-              <div class="modal-info-label">Viral Score</div>
-              <div class="modal-viral-info">
-                <div class="modal-viral-score">${file.viralScore}/10 - ${scoreLevelText} Virality</div>
-                <div class="modal-viral-reason">${file.viralReason || 'No reason provided'}</div>
-              </div>
-            </div>
-          `;
-        }
-
-        // Description section
-        let descriptionSection = '';
-        if (file.description) {
-          descriptionSection = `
-            <div class="modal-info-section">
-              <div class="modal-info-label">Description</div>
-              <div class="modal-info-content">${file.description}</div>
-            </div>
-          `;
-        }
-
-        // Hashtags section
-        let hashtagsSection = '';
-        console.log('File hashtags:', file.relevant_hashtags);
-        if (file.relevant_hashtags) {
-          const hashtags = file.relevant_hashtags
-            .split(/[,\s]+/)
-            .filter(h => h)
-            .map(tag => {
-              const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
-              return `<span class="modal-hashtag">${cleanTag}</span>`;
-            })
-            .join('');
-          
-          hashtagsSection = `
-            <div class="modal-info-section">
-              <div class="modal-info-label">Hashtags</div>
-              <div class="modal-hashtags">${hashtags}</div>
-            </div>
-          `;
-        }
-
-        modalBody.innerHTML = `
-          ${mediaHTML}
-          ${viralSection}
-          ${descriptionSection}
-          ${hashtagsSection}
-        `;
-
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeModal(event) {
-        // Only close if clicking overlay or close button, not the content
-        if (event && event.target.className !== 'modal-overlay') return;
-        
-        const modal = document.getElementById('modalOverlay');
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-      }
-
-      // Close modal on Escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          closeModal();
-        }
-      });
-
-      // ============================================
-      // INITIALIZATION
-      // ============================================
+      /**
+       * Initialize the application
+       */
       async function init() {
         try {
           // Load parameters from URL
           loadURLParameters();
           
+          // Validate required configuration
           if (!CONFIG.baseId) {
             alert("⚠️ Missing Airtable Base ID. Please provide baseId in URL.");
             document.getElementById("loading").style.display = "none";
@@ -720,23 +651,22 @@
             return;
           }
 
+          // Load content from Airtable
           await loadFromAirtable();
           
           document.getElementById("loading").style.display = "none";
           
-          if (contentFiles.length === 0) {
+          // Render content or show empty state
+          if (contentMedia.length === 0) {
             document.getElementById("contentGrid").innerHTML = '<div class="loading">No content records found</div>';
           } else {
             renderContentGrid();
             updateStats();
           }
 
-          // Show/hide UI elements based on read-only mode
+          // Handle read-only mode UI
           if (isReadOnlyMode) {
-            // Hide action buttons
             document.getElementById("actionButtons").style.display = "none";
-            
-            // Update page title
             document.querySelector("h1").textContent = "Content Viewer";
             document.querySelector("h1").nextElementSibling.textContent = "View approved content and their status";
           }
@@ -747,27 +677,21 @@
       }
 
       // ============================================
-      // LOAD FROM AIRTABLE
+      // AIRTABLE DATA LOADING
       // ============================================
+      
+      /**
+       * Load all content records from Airtable with pagination
+       */
       async function loadFromAirtable() {
         try {
           let allRecords = [];
           let offset = null;
 
-          // Fetch all records (handle pagination)
+          // Fetch all records with pagination
           do {
-            let url = `https://api.airtable.com/v0/${
-              CONFIG.baseId
-            }/${encodeURIComponent(CONFIG.tableName)}?`;
+            let url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(CONFIG.tableName)}?`;
 
-            // Add filter if specified
-            if (CONFIG.filterFormula) {
-              url += `filterByFormula=${encodeURIComponent(
-                CONFIG.filterFormula
-              )}&`;
-            }
-
-            // Add offset for pagination
             if (offset) {
               url += `offset=${offset}`;
             }
@@ -780,9 +704,7 @@
 
             if (!response.ok) {
               const errorText = await response.text();
-              throw new Error(
-                `Airtable API error: ${response.status} - ${errorText}`
-              );
+              throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
@@ -790,8 +712,8 @@
             offset = data.offset;
           } while (offset);
 
-          // Transform Airtable records to our format
-          contentFiles = allRecords
+          // Transform and filter records
+          contentMedia = allRecords
             .map((record) => {
               const fields = record.fields;
               const contentUrl = fields[CONFIG.fields.contentUrl];
@@ -801,36 +723,34 @@
                 return null;
               }
 
-              // Determine file type from URL
+              // Determine media type from URL extension
               const url = contentUrl;
-              const fileName = url.split("/").pop().split("?")[0];
-              const ext = fileName.split(".").pop().toLowerCase();
+              const mediaName = url.split("/").pop().split("?")[0];
+              const ext = mediaName.split(".").pop().toLowerCase();
 
-              let type = "file";
+              let type = "media";
               if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) {
                 type = "image";
               } else if (["mp4", "webm", "mov", "avi", "mkv"].includes(ext)) {
                 type = "video";
               }
 
-              const fileId = `file_${record.id}`;
-              const status = (
-                fields[CONFIG.fields.status] || "Pending"
-              ).toLowerCase();
+              const mediaId = `media_${record.id}`;
+              const status = (fields[CONFIG.fields.status] || "Pending").toLowerCase();
 
               // Store approval state
-              approvalStates[fileId] = {
+              approvalStates[mediaId] = {
                 status: status,
                 airtableRecordId: record.id,
               };
 
               return {
-                id: fileId,
+                id: mediaId,
                 airtableRecordId: record.id,
                 contentId: fields[CONFIG.fields.contentId] || "",
                 url: url,
                 type: type,
-                title: fields[CONFIG.fields.title] || fileName,
+                title: fields[CONFIG.fields.title] || mediaName,
                 description: fields[CONFIG.fields.description] || "",
                 relevant_hashtags: fields[CONFIG.fields.relevant_hashtags] || "",
                 viralScore: fields[CONFIG.fields.viralScore] || null,
@@ -838,32 +758,27 @@
                 socialMediaPlatforms: fields[CONFIG.fields.socialMediaPlatforms] || "",
               };
             })
-            .filter((file) => file !== null)
+            .filter((media) => media !== null)
             .sort((a, b) => {
               // Sort by viral score descending (highest first)
-              // Handle null/undefined scores by treating them as -1
               const scoreA = a.viralScore !== null && a.viralScore !== undefined ? parseFloat(a.viralScore) : -1;
               const scoreB = b.viralScore !== null && b.viralScore !== undefined ? parseFloat(b.viralScore) : -1;
               return scoreB - scoreA;
             });
 
-          // Find Work Order record if workOrderName is specified
-          if (CONFIG.tableName) {
-            await findWorkOrderRecord();
-          }
+          // Find and check Work Order record
+          await findWorkOrderRecord();
         } catch (error) {
           throw error;
         }
       }
 
-      // ============================================
-      // FIND WORK ORDER RECORD
-      // ============================================
+      /**
+       * Find the Work Order record and check if it's already approved
+       */
       async function findWorkOrderRecord() {
         try {
-          const url = `https://api.airtable.com/v0/${
-            CONFIG.baseId
-          }/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}?filterByFormula=${encodeURIComponent(
+          const url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}?filterByFormula=${encodeURIComponent(
             `{${CONFIG.workOrdersTable.nameField}} = '${CONFIG.tableName}'`
           )}`;
 
@@ -893,119 +808,100 @@
             }
           }
         } catch (error) {
-          // Silently fail - Work Order update is optional
           console.error('Error finding work order:', error);
         }
       }
 
       // ============================================
-      // RENDER CONTENT GRID
+      // UI RENDERING
       // ============================================
+      
+      /**
+       * Render the content grid with all media cards
+       */
       function renderContentGrid() {
         const grid = document.getElementById("contentGrid");
 
-        if (contentFiles.length === 0) {
+        if (contentMedia.length === 0) {
           grid.innerHTML = '<div class="loading">No content found</div>';
           return;
         }
 
         grid.innerHTML = "";
 
-        contentFiles.forEach((file) => {
-          const card = createContentCard(file);
+        contentMedia.forEach((media) => {
+          const card = createContentCard(media);
           grid.appendChild(card);
         });
       }
 
-      // ============================================
-      // GET VIRAL SCORE LEVEL
-      // ============================================
-      function getViralScoreLevel(score) {
-        if (score === null || score === undefined) return null;
-        const numScore = parseFloat(score);
-        if (isNaN(numScore)) return null;
-        
-        if (numScore >= 7) return "high";
-        if (numScore >= 4) return "medium";
-        return "low";
-      }
-
-      // ============================================
-      // CREATE CONTENT CARD
-      // ============================================
-      function createContentCard(file) {
+      /**
+       * Create a content card element for a single media item
+       */
+      function createContentCard(media) {
         const card = document.createElement("div");
         card.className = "content-card";
-        card.id = `card-${file.id}`;
+        card.id = `card-${media.id}`;
 
-        const status = approvalStates[file.id]?.status || "pending";
+        const status = approvalStates[media.id]?.status || "pending";
         if (status === "approved") {
           card.classList.add("approved");
         } else if (status === "denied") {
           card.classList.add("denied");
         }
 
-        // Content preview
+        // Build media preview HTML
         let contentHTML = "";
-        if (file.type === "video") {
-          contentHTML = `<video src="${file.url}" class="content-preview video" controls></video>`;
-        } else if (file.type === "image") {
-          contentHTML = `<img src="${file.url}" class="content-preview" alt="${file.title}" loading="lazy">`;
+        if (media.type === "video") {
+          contentHTML = `<video src="${media.url}" class="content-preview video" controls></video>`;
+        } else if (media.type === "image") {
+          contentHTML = `<img src="${media.url}" class="content-preview" alt="${media.title}" loading="lazy">`;
         } else {
           contentHTML = `<div class="content-preview" style="display:flex;align-items:center;justify-content:center;color:#999;">
-                    <span>📄 File</span>
+                    <span>📄 Media</span>
                 </div>`;
         }
 
-        // Viral score badge
+        // Build viral score badge if available
         let viralScoreBadge = "";
-        if (file.viralScore !== null && file.viralScore !== undefined) {
-          const scoreLevel = getViralScoreLevel(file.viralScore);
-          const reason = file.viralReason || "No reason provided";
+        if (media.viralScore !== null && media.viralScore !== undefined) {
+          const scoreLevel = getViralScoreLevel(media.viralScore);
+          const reason = media.viralReason || "No reason provided";
           
           viralScoreBadge = `
             <div class="viral-score-badge ${scoreLevel}" data-reason="${reason.replace(/"/g, '&quot;')}" title="Hover for details">
-              🔥 ${file.viralScore}
+              🔥 ${media.viralScore}
             </div>
           `;
         }
 
+        // Build card HTML
         card.innerHTML = `
                 ${contentHTML}
                 <div class="content-info">
                     <div class="content-header">
-                        ${
-                          file.title
-                            ? `<div class="content-title">${file.title}</div>`
-                            : ""
-                        }
+                        ${media.title ? `<div class="content-title">${media.title}</div>` : ""}
                         ${viralScoreBadge}
                     </div>
-                    <button class="view-details-btn" onclick="openModal('${file.id}')">
+                    <button class="view-details-btn" onclick="openModal('${media.id}')">
                       View Details
                     </button>
                     <div class="approval-section">
                         <div class="status-selector">
-                            <button class="status-button ${
-                              status === "approved" ? "active approved" : ""
-                            }" 
-                                    data-file-id="${file.id}"
+                            <button class="status-button ${status === "approved" ? "active approved" : ""}" 
+                                    data-media-id="${media.id}"
                                     data-status="approved"
                                     ${isReadOnlyMode ? 'disabled style="cursor: not-allowed; opacity: 0.6;"' : ''}>
                                 ✓ Approve
                             </button>
-                            <button class="status-button ${
-                              status === "pending" ? "active pending" : ""
-                            }" 
-                                    data-file-id="${file.id}"
+                            <button class="status-button ${status === "pending" ? "active pending" : ""}" 
+                                    data-media-id="${media.id}"
                                     data-status="pending"
                                     ${isReadOnlyMode ? 'disabled style="cursor: not-allowed; opacity: 0.6;"' : ''}>
                                 ○ Pending
                             </button>
-                            <button class="status-button ${
-                              status === "denied" ? "active denied" : ""
-                            }" 
-                                    data-file-id="${file.id}"
+                            <button class="status-button ${status === "denied" ? "active denied" : ""}" 
+                                    data-media-id="${media.id}"
                                     data-status="denied"
                                     ${isReadOnlyMode ? 'disabled style="cursor: not-allowed; opacity: 0.6;"' : ''}>
                                 ✕ Deny
@@ -1020,9 +916,9 @@
           const statusButtons = card.querySelectorAll(".status-button");
           statusButtons.forEach((btn) => {
             btn.addEventListener("click", function () {
-              const fileId = this.dataset.fileId;
+              const mediaId = this.dataset.mediaId;
               const status = this.dataset.status;
-              setStatus(fileId, status);
+              setStatus(mediaId, status);
             });
           });
         }
@@ -1030,23 +926,153 @@
         return card;
       }
 
+      /**
+       * Update statistics display
+       */
+      function updateStats() {
+        const totalCount = contentMedia.length;
+        let approvedCount = 0;
+        let pendingCount = 0;
+        let deniedCount = 0;
+
+        Object.values(approvalStates).forEach((state) => {
+          if (state.status === "approved") approvedCount++;
+          else if (state.status === "denied") deniedCount++;
+          else pendingCount++;
+        });
+
+        document.getElementById("totalCount").textContent = totalCount;
+        document.getElementById("approvedCount").textContent = approvedCount;
+        document.getElementById("pendingCount").textContent = pendingCount;
+        document.getElementById("deniedCount").textContent = deniedCount;
+      }
+
       // ============================================
-      // SET STATUS
+      // MODAL FUNCTIONS
       // ============================================
-      function setStatus(fileId, status) {
+      
+      /**
+       * Open the details modal for a specific media item
+       */
+      function openModal(mediaId) {
+        const media = contentMedia.find(m => m.id === mediaId);
+        if (!media) return;
+
+        const modal = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+
+        // Set modal title
+        modalTitle.textContent = media.title || 'Content Details';
+
+        // Build media preview HTML
+        let mediaHTML = '';
+        if (media.type === 'video') {
+          mediaHTML = `<video src="${media.url}" class="modal-media-preview" controls autoplay></video>`;
+        } else if (media.type === 'image') {
+          mediaHTML = `<img src="${media.url}" class="modal-media-preview image" alt="${media.title}">`;
+        }
+
+        // Build viral score section
+        let viralSection = '';
+        if (media.viralScore !== null && media.viralScore !== undefined) {
+          const scoreLevel = getViralScoreLevel(media.viralScore);
+          const scoreLevelText = scoreLevel === 'high' ? 'High' : scoreLevel === 'medium' ? 'Medium' : 'Low';
+          viralSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Viral Score</div>
+              <div class="modal-viral-info">
+                <div class="modal-viral-score">${media.viralScore}/10 - ${scoreLevelText} Virality</div>
+                <div class="modal-viral-reason">${media.viralReason || 'No reason provided'}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Build description section
+        let descriptionSection = '';
+        if (media.description) {
+          descriptionSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Description</div>
+              <div class="modal-info-content">${media.description}</div>
+            </div>
+          `;
+        }
+
+        // Build hashtags section
+        let hashtagsSection = '';
+        if (media.relevant_hashtags) {
+          const hashtags = media.relevant_hashtags
+            .split(/[,\s]+/)
+            .filter(h => h)
+            .map(tag => {
+              const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
+              return `<span class="modal-hashtag">${cleanTag}</span>`;
+            })
+            .join('');
+          
+          hashtagsSection = `
+            <div class="modal-info-section">
+              <div class="modal-info-label">Hashtags</div>
+              <div class="modal-hashtags">${hashtags}</div>
+            </div>
+          `;
+        }
+
+        // Set modal content
+        modalBody.innerHTML = `
+          ${mediaHTML}
+          ${viralSection}
+          ${descriptionSection}
+          ${hashtagsSection}
+        `;
+
+        // Show modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      /**
+       * Close the details modal
+       */
+      function closeModal(event) {
+        // Only close if clicking overlay or close button
+        if (event && event.target.className !== 'modal-overlay') return;
+        
+        const modal = document.getElementById('modalOverlay');
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+
+      // Close modal on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // ============================================
+      // STATUS MANAGEMENT
+      // ============================================
+      
+      /**
+       * Set the approval status for a media item
+       */
+      function setStatus(mediaId, status) {
         // Prevent changes in read-only mode
         if (isReadOnlyMode) {
           return;
         }
 
-        if (!approvalStates[fileId]) {
-          approvalStates[fileId] = {};
+        if (!approvalStates[mediaId]) {
+          approvalStates[mediaId] = {};
         }
 
-        approvalStates[fileId].status = status;
+        approvalStates[mediaId].status = status;
 
-        // Update UI
-        const card = document.getElementById(`card-${fileId}`);
+        // Update card styling
+        const card = document.getElementById(`card-${mediaId}`);
         card.classList.remove("approved", "denied");
         if (status === "approved") {
           card.classList.add("approved");
@@ -1054,7 +1080,7 @@
           card.classList.add("denied");
         }
 
-        // Update buttons
+        // Update status buttons
         const buttons = card.querySelectorAll(".status-button");
         buttons.forEach((btn) => {
           btn.classList.remove("active", "approved", "pending", "denied");
@@ -1066,35 +1092,45 @@
         updateStats();
       }
 
-      // ============================================
-      // GET WORK ORDERS PAGE URL
-      // ============================================
-      function getWorkOrdersPageUrl() {
-        // Try to construct work orders page URL
-        const currentUrl = window.location.href;
-        
-        // If we came from work orders page, referrer should have it
-        if (document.referrer && document.referrer.includes('work-orders')) {
-          return document.referrer;
+      /**
+       * Approve all content items at once
+       */
+      function approveAllContent() {
+        // Prevent changes in read-only mode
+        if (isReadOnlyMode) {
+          alert("⚠️ This work order is already approved. You cannot make changes in read-only mode.");
+          return;
         }
-        
-        // Try to construct URL based on current page
-        // Replace approval page with work orders page
-        if (currentUrl.includes('/approval') || currentUrl.includes('content-approval')) {
-          const baseUrl = currentUrl.split(/\/(approval|content-approval)/)[0];
-          return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
-        }
-        
-        // Construct from base URL
-        const origin = window.location.origin;
-        const pathname = window.location.pathname;
-        const baseUrl = origin + pathname.substring(0, pathname.lastIndexOf('/'));
-        return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
+
+        contentMedia.forEach((media) => {
+          setStatus(media.id, "approved");
+        });
       }
 
       // ============================================
-      // SYNC TO AIRTABLE
+      // VIRAL SCORE UTILITIES
       // ============================================
+      
+      /**
+       * Determine viral score level (high/medium/low) based on numeric score
+       */
+      function getViralScoreLevel(score) {
+        if (score === null || score === undefined) return null;
+        const numScore = parseFloat(score);
+        if (isNaN(numScore)) return null;
+        
+        if (numScore >= 7) return "high";
+        if (numScore >= 4) return "medium";
+        return "low";
+      }
+
+      // ============================================
+      // AIRTABLE SYNC
+      // ============================================
+      
+      /**
+       * Sync all approval statuses back to Airtable
+       */
       async function syncToAirtable() {
         // Prevent submissions in read-only mode
         if (isReadOnlyMode) {
@@ -1106,7 +1142,7 @@
           const updates = [];
 
           // Prepare updates for all content records
-          for (const [fileId, state] of Object.entries(approvalStates)) {
+          for (const [mediaId, state] of Object.entries(approvalStates)) {
             if (state.airtableRecordId) {
               updates.push({
                 id: state.airtableRecordId,
@@ -1128,16 +1164,14 @@
           submitButton.disabled = true;
           submitButton.textContent = "⏳ Submitting...";
 
-          // Batch updates to content table (max 10 per request)
+          // Batch updates (max 10 per request per Airtable limits)
           const batchSize = 10;
           let successCount = 0;
 
           for (let i = 0; i < updates.length; i += batchSize) {
             const batch = updates.slice(i, i + batchSize);
 
-            const url = `https://api.airtable.com/v0/${
-              CONFIG.baseId
-            }/${encodeURIComponent(CONFIG.tableName)}`;
+            const url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(CONFIG.tableName)}`;
             
             const response = await fetch(url, {
               method: "PATCH",
@@ -1156,16 +1190,15 @@
             successCount += batch.length;
           }
 
-          // Update Work Order checkbox when saving
+          // Update Work Order checkbox
           await updateWorkOrder();
 
           // Trigger n8n webhook with approved content
           await triggerN8nWorkflow();
 
-          // Show success message
+          // Show success and redirect
           alert(`✓ Successfully submitted ${successCount} approvals!\n\nRedirecting to Work Orders...`);
 
-          // Redirect to work orders page
           const workOrdersUrl = getWorkOrdersPageUrl();
           window.location.href = workOrdersUrl;
 
@@ -1180,80 +1213,16 @@
         }
       }
 
-      // ============================================
-      // TRIGGER N8N WORKFLOW
-      // ============================================
-      async function triggerN8nWorkflow() {
-        // Skip if n8n webhook is disabled
-        if (!CONFIG.n8nWebhook.enabled || !CONFIG.n8nWebhook.url) {
-          return;
-        }
-
-        try {
-          // Get all approved content
-          const approvedContent = contentFiles.filter(file => 
-            approvalStates[file.id]?.status === "approved"
-          );
-
-          if (approvedContent.length === 0) {
-            return;
-          }
-
-          // Prepare payload for n8n
-          const payload = {
-            workOrderName: CONFIG.tableName,
-            airtableId: CONFIG.baseId,
-            email: CONFIG.email,
-            ghlLocationId: CONFIG.ghlLocationId,
-            timestamp: new Date().toISOString(),
-            totalApproved: approvedContent.length,
-            approvedContent: approvedContent.map(file => ({
-              id: file.airtableRecordId,
-              contentId: file.contentId,
-              title: file.title,
-              description: file.description,
-              url: file.url,
-              type: file.type,
-              relevant_hashtags: file.relevant_hashtags,
-              viralScore: file.viralScore,
-              viralReason: file.viralReason,
-              socialMediaPlatforms: file.socialMediaPlatforms,
-            })),
-          };
-
-          // Send to n8n webhook
-          const response = await fetch(CONFIG.n8nWebhook.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (!response.ok) {
-            throw new Error(`n8n webhook failed: ${response.status}`);
-          }
-
-        } catch (error) {
-          // Silently fail - n8n integration is optional
-          // Don't disrupt the main approval flow
-        }
-      }
-
-      // ============================================
-      // UPDATE WORK ORDER
-      // ============================================
+      /**
+       * Update the Work Order record's approved checkbox
+       */
       async function updateWorkOrder() {
         try {
-          // Use Work Order found by name
           if (!workOrderRecordId) {
             return false;
           }
 
-          // Update the Work Order checkbox
-          const url = `https://api.airtable.com/v0/${
-            CONFIG.baseId
-          }/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}`;
+          const url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(CONFIG.workOrdersTable.tableName)}`;
 
           const response = await fetch(url, {
             method: "PATCH",
@@ -1280,49 +1249,105 @@
           return true;
 
         } catch (error) {
-          // Silently fail - Work Order update is optional
+          console.error('Error updating work order:', error);
           return false;
         }
       }
 
       // ============================================
-      // BATCH ACTIONS
+      // N8N WEBHOOK INTEGRATION
       // ============================================
-      function approveAllContent() {
-        // Prevent changes in read-only mode
-        if (isReadOnlyMode) {
-          alert("⚠️ This work order is already approved. You cannot make changes in read-only mode.");
+      
+      /**
+       * Trigger n8n workflow with approved content data
+       */
+      async function triggerN8nWorkflow() {
+        // Skip if n8n webhook is disabled
+        if (!CONFIG.n8nWebhook.enabled || !CONFIG.n8nWebhook.url) {
           return;
         }
 
-        contentFiles.forEach((file) => {
-          setStatus(file.id, "approved");
-        });
+        try {
+          // Get all approved content
+          const approvedContent = contentMedia.filter(media => 
+            approvalStates[media.id]?.status === "approved"
+          );
+
+          if (approvedContent.length === 0) {
+            return;
+          }
+
+          // Prepare payload for n8n
+          const payload = {
+            workOrderName: CONFIG.tableName,
+            airtableId: CONFIG.baseId,
+            email: CONFIG.email,
+            ghlLocationId: CONFIG.ghlLocationId,
+            timestamp: new Date().toISOString(),
+            totalApproved: approvedContent.length,
+            approvedContent: approvedContent.map(media => ({
+              id: media.airtableRecordId,
+              contentId: media.contentId,
+              title: media.title,
+              description: media.description,
+              url: media.url,
+              type: media.type,
+              relevant_hashtags: media.relevant_hashtags,
+              viralScore: media.viralScore,
+              viralReason: media.viralReason,
+              socialMediaPlatforms: media.socialMediaPlatforms,
+            })),
+          };
+
+          // Send to n8n webhook
+          const response = await fetch(CONFIG.n8nWebhook.url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`n8n webhook failed: ${response.status}`);
+          }
+
+        } catch (error) {
+          // Silently fail - n8n integration is optional
+          console.error('Error triggering n8n workflow:', error);
+        }
       }
 
       // ============================================
-      // UPDATE STATS
+      // NAVIGATION UTILITIES
       // ============================================
-      function updateStats() {
-        const totalCount = contentFiles.length;
-        let approvedCount = 0;
-        let pendingCount = 0;
-        let deniedCount = 0;
-
-        Object.values(approvalStates).forEach((state) => {
-          if (state.status === "approved") approvedCount++;
-          else if (state.status === "denied") deniedCount++;
-          else pendingCount++;
-        });
-
-        document.getElementById("totalCount").textContent = totalCount;
-        document.getElementById("approvedCount").textContent = approvedCount;
-        document.getElementById("pendingCount").textContent = pendingCount;
-        document.getElementById("deniedCount").textContent = deniedCount;
+      
+      /**
+       * Construct URL to work orders page
+       */
+      function getWorkOrdersPageUrl() {
+        const currentUrl = window.location.href;
+        
+        // Check referrer first
+        if (document.referrer && document.referrer.includes('work-orders')) {
+          return document.referrer;
+        }
+        
+        // Try to construct URL based on current page
+        if (currentUrl.includes('/approval') || currentUrl.includes('content-approval')) {
+          const baseUrl = currentUrl.split(/\/(approval|content-approval)/)[0];
+          return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
+        }
+        
+        // Construct from base URL
+        const origin = window.location.origin;
+        const pathname = window.location.pathname;
+        const baseUrl = origin + pathname.substring(0, pathname.lastIndexOf('/'));
+        return `${baseUrl}/workOrders.html?baseId=${encodeURIComponent(CONFIG.baseId)}`;
       }
 
       // ============================================
-      // START
+      // APPLICATION START
       // ============================================
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);
