@@ -28,6 +28,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
+      /* Header Section */
       .header {
         padding-bottom: 20px;
         border-bottom: 2px solid #f7fafc;
@@ -45,12 +46,14 @@
         font-size: 16px;
       }
 
+      /* Work Orders List */
       .work-orders-list {
         display: flex;
         flex-direction: column;
         gap: 20px;
       }
 
+      /* Work Order Card */
       .work-order-card {
         background: #f7fafc;
         border-radius: 12px;
@@ -90,6 +93,7 @@
         gap: 10px;
       }
 
+      /* Status Badges */
       .status-badge {
         display: inline-block;
         padding: 6px 12px;
@@ -116,6 +120,7 @@
         color: #1e3a8a;
       }
 
+      /* Action Buttons */
       .work-order-actions {
         display: flex;
         gap: 10px;
@@ -154,6 +159,7 @@
         background: #4b5563;
       }
 
+      /* Video Info Display */
       .video-info {
         margin-top: 10px;
         padding: 10px;
@@ -175,6 +181,7 @@
         text-decoration: underline;
       }
 
+      /* Loading State */
       .loading {
         text-align: center;
         padding: 60px 20px;
@@ -201,6 +208,7 @@
         }
       }
 
+      /* Empty State */
       .empty-state {
         padding: 60px 20px;
         text-align: center;
@@ -222,6 +230,7 @@
         font-size: 16px;
       }
 
+      /* Business Name Form */
       .businessName-form {
         text-align: center;
         padding: 40px 20px;
@@ -281,6 +290,7 @@
         cursor: not-allowed;
       }
 
+      /* Error Message */
       .error-message {
         color: #e53e3e;
         font-size: 14px;
@@ -288,7 +298,7 @@
         text-align: center;
       }
 
-      /* Mobile responsiveness */
+      /* Mobile Responsiveness */
       @media (max-width: 768px) {
         body {
           padding: 10px;
@@ -325,12 +335,13 @@
         <p class="subtitle">View and manage your content work orders</p>
       </div>
 
+      <!-- Business Name Input Form -->
       <div id="businessNameForm" class="businessName-form" style="display: none;">
         <div class="businessName-form-title">Welcome!</div>
         <div class="businessName-form-subtitle">Please enter your business name to access your work orders</div>
         <div class="businessName-input-group">
           <input 
-            type="businessName" 
+            type="text" 
             id="businessNameInput" 
             class="businessName-input" 
             placeholder="Your Business Name"
@@ -341,49 +352,53 @@
         </div>
       </div>
 
+      <!-- Loading Indicator -->
       <div id="loading" class="loading" style="display: none;">
         <div class="spinner"></div>
         <div>Loading your work orders...</div>
       </div>
 
+      <!-- Work Orders List Container -->
       <div id="workOrdersList" class="work-orders-list"></div>
     </div>
 
     <script>
       // ============================================
-      // CONFIGURATION - AUTO-LOADED FROM GHL
+      // CONFIGURATION
       // ============================================
       const CONFIG = {        
-        // Airtable Configuration
-        airtableToken: "patDOZjuXZpa3ZySv.49fa36d882b45f51832e870a66e47c8d26771e340488fd966a59dc369a052cea", // Your Personal Access Token
+        // Airtable Authentication
+        airtableToken: "patDOZjuXZpa3ZySv.49fa36d882b45f51832e870a66e47c8d26771e340488fd966a59dc369a052cea",
+        baseId: "", // Will be fetched based on business name
         businessName: "", // Will be set from user input
-        workOrdersTableName: "Work Orders", // Name of your Work Orders table
-        email: "", // Will be fetched from Airtable
-        ghlLocationId: "", // Will be fetched from Airtable
+        workOrdersTableName: "Work Orders",
         
-        // Field names in your Work Orders table
+        // Airtable Field Mappings
         fields: {
-          name: "name", // Work order name/title field
+          name: "name",
           input_video_url: "input_video_url",
           status: "status",
-          approved: "approved", // Checkbox field
-          email: "email", // email field to link to GHL contact
+          approved: "approved",
+          email: "email",
           ghl_location_id: "ghl_location_id", 
         },
       
-        // Approval page URL template (use tableName parameter)
-        // The work order name will be used as the table name in Airtable
+        // Approval page URL template (work order name is used as table name)
         approvalPageUrl: "http://127.0.0.1:5500/approval.html?baseId={baseId}&tableName={workOrderName}",
       };
 
       // ============================================
-      // STATE
+      // STATE MANAGEMENT
       // ============================================
-      let workOrders = [];
+      let workOrders = []; // Array of all work orders
 
       // ============================================
-      // GET AIRTABLE BASE ID BY BUSINESS NAME 
+      // AIRTABLE BASE LOOKUP
       // ============================================
+      
+      /**
+       * Find Airtable base ID by business name
+       */
       async function getBaseIdByName() {
         try {
           console.log(`Searching for base: "${CONFIG.businessName}"`);
@@ -402,11 +417,10 @@
           const data = await response.json();
           
           if (!data.bases || data.bases.length === 0) {
-            console.log('No bases found');
-            return null;
+            throw new Error('No Airtable bases found for your account');
           }
 
-          // Find the base with matching name
+          // Find base with matching name
           const matchingBase = data.bases.find(
             base => base.name === CONFIG.businessName
           );
@@ -414,11 +428,10 @@
           if (matchingBase) {
             console.log(`✅ Found base: "${matchingBase.name}" with ID: ${matchingBase.id}`);
             CONFIG.baseId = matchingBase.id;
-            return;
           } else {
-            console.log(`❌ No base found with name: "${baseName}"`);
+            console.log(`❌ No base found with name: "${CONFIG.businessName}"`);
             console.log('Available bases:', data.bases.map(b => b.name));
-            return;
+            throw new Error(`No Airtable base found with name "${CONFIG.businessName}"`);
           }
 
         } catch (error) {
@@ -428,20 +441,23 @@
       }
 
       // ============================================
-      // LOAD WORK ORDERS FROM AIRTABLE
+      // AIRTABLE DATA LOADING
       // ============================================
+      
+      /**
+       * Load all work orders from Airtable with pagination
+       */
       async function loadWorkOrders() {        
         try {
           let allRecords = [];
           let offset = null;
 
-          // Fetch all records (handle pagination)
+          // Fetch all records with pagination
           do {
             let url = `https://api.airtable.com/v0/${CONFIG.baseId}/${encodeURIComponent(
               CONFIG.workOrdersTableName
             )}?sort[0][field]=${encodeURIComponent(CONFIG.fields.name)}&sort[0][direction]=desc`;
 
-            // Add offset for pagination
             if (offset) {
               url += `&offset=${offset}`;
             }
@@ -454,9 +470,7 @@
 
             if (!response.ok) {
               const errorText = await response.text();
-              throw new Error(
-                `Airtable API error: ${response.status} - ${errorText}`
-              );
+              throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
@@ -464,7 +478,7 @@
             offset = data.offset;
           } while (offset);
 
-          // Transform Airtable records
+          // Transform Airtable records to work order objects
           workOrders = allRecords.map((record) => {
             const fields = record.fields;
             
@@ -474,11 +488,9 @@
               inputVideoUrl: fields[CONFIG.fields.input_video_url] || "",
               status: fields[CONFIG.fields.status] || "",
               approved: fields[CONFIG.fields.approved] || false,
-              createdTime: record.createdTime, // Use Airtable's auto-generated created time
+              createdTime: record.createdTime,
               email: fields[CONFIG.fields.email] || "",
               ghlLocationId: fields[CONFIG.fields.ghl_location_id] || "",
-              // Store all fields for additional data
-              allFields: fields,
             };
           });
 
@@ -488,8 +500,12 @@
       }
 
       // ============================================
-      // RENDER WORK ORDERS LIST
+      // UI RENDERING
       // ============================================
+      
+      /**
+       * Render the work orders list
+       */
       function renderWorkOrders() {
         const list = document.getElementById("workOrdersList");
 
@@ -512,14 +528,14 @@
         });
       }
 
-      // ============================================
-      // CREATE WORK ORDER CARD
-      // ============================================
+      /**
+       * Create a work order card element
+       */
       function createWorkOrderCard(workOrder) {
         const card = document.createElement("div");
         card.className = "work-order-card";
 
-        // Status badge
+        // Determine status badge based on approval state and status
         let statusBadge = '';
         if (workOrder.approved) {
           statusBadge = '<span class="status-badge status-approved">✓ Approved</span>';
@@ -532,18 +548,14 @@
           statusBadge = '<span class="status-badge status-pending">⏳ Pending</span>';
         }
 
-        // Set information needed for content approval page
+        // Store context in localStorage for approval page
         localStorage.setItem("email", workOrder.email);
         localStorage.setItem("ghlLocationId", workOrder.ghlLocationId);
 
-        // Build approval page URL - pass work order name as tableName
-        const approvalUrl = CONFIG.approvalPageUrl.replace(
-          "{workOrderName}",
-          encodeURIComponent(workOrder.name)
-        ).replace(
-          "{baseId}",
-          encodeURIComponent(CONFIG.baseId)
-        );
+        // Build approval page URL (work order name is used as table name)
+        const approvalUrl = CONFIG.approvalPageUrl
+          .replace("{workOrderName}", encodeURIComponent(workOrder.name))
+          .replace("{baseId}", encodeURIComponent(CONFIG.baseId));
 
         // Show input video URL if available
         const videoInfo = workOrder.inputVideoUrl 
@@ -552,22 +564,22 @@
              </div>`
           : '';
 
-        // Show appropriate button based on status and approval state
+        // Show appropriate button based on status
         let actionButtons = '';
         if (workOrder.status === 'Awaiting Review') {
-          // Show Approve button for work orders awaiting review
-          actionButtons = `<div class="work-order-actions">
-               <a href="${approvalUrl}" class="btn btn-primary">
-                 ✓ Approve Content
-               </a>
-             </div>`;
+          actionButtons = `
+            <div class="work-order-actions">
+              <a href="${approvalUrl}" class="btn btn-primary">
+                ✓ Approve Content
+              </a>
+            </div>`;
         } else if (workOrder.approved) {
-          // Show View button for approved work orders
-          actionButtons = `<div class="work-order-actions">
-               <a href="${approvalUrl}" class="btn btn-secondary">
-                 View Content
-               </a>
-             </div>`;
+          actionButtons = `
+            <div class="work-order-actions">
+              <a href="${approvalUrl}" class="btn btn-secondary">
+                View Content
+              </a>
+            </div>`;
         }
 
         card.innerHTML = `
@@ -589,15 +601,21 @@
       // ============================================
       // INITIALIZATION
       // ============================================
+      
+      /**
+       * Initialize the application and handle business name form
+       */
       async function init() {
-        // Show businessName form
+        // Show business name input form
         document.getElementById("businessNameForm").style.display = "block";
         
-        // Handle businessName form submission
         const businessNameInput = document.getElementById("businessNameInput");
         const submitBtn = document.getElementById("businessNameSubmitBtn");
         const errorMessage = document.getElementById("errorMessage");
         
+        /**
+         * Handle form submission
+         */
         const handleSubmit = async () => {
           const businessName = businessNameInput.value.trim();
           
@@ -608,35 +626,34 @@
 
           CONFIG.businessName = businessName;
           
-          // Clear error and disable button
+          // Clear error and show loading state
           errorMessage.textContent = "";
           submitBtn.disabled = true;
           submitBtn.textContent = "Loading...";
           
           try {            
-            // Hide businessName form, show loading
+            // Hide form, show loading
             document.getElementById("businessNameForm").style.display = "none";
             document.getElementById("loading").style.display = "block";
 
-            // Get base ID by business name
+            // Fetch base ID by business name
             await getBaseIdByName();
 
-            // Store information for content approval page
+            // Store in localStorage for approval page
             localStorage.setItem("baseId", CONFIG.baseId);
             localStorage.setItem("businessName", CONFIG.businessName);
             
-            // Load work orders
+            // Load work orders from Airtable
             await loadWorkOrders();
             
+            // Hide loading, render results
             document.getElementById("loading").style.display = "none";
+            renderWorkOrders();
             
-            if (workOrders.length === 0) {
-              renderWorkOrders(); // This will show the empty state
-            } else {
-              renderWorkOrders();
-            }
           } catch (error) {
             // Show error and re-enable form
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("businessNameForm").style.display = "block";
             errorMessage.textContent = error.message;
             submitBtn.disabled = false;
             submitBtn.textContent = "Continue";
@@ -653,7 +670,7 @@
       }
 
       // ============================================
-      // START
+      // APPLICATION START
       // ============================================
       document.addEventListener("DOMContentLoaded", init);
     </script>
